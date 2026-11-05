@@ -159,11 +159,11 @@ body.no-info .tv-info { display: none; }
 .tv-party img.shiny { outline: 1px solid var(--warn); outline-offset: -1px; }
 
 /* Small kiosk screens: keep the screen big and the strip short. */
-@media (max-height: 520px), (max-width: 520px) {
+@media (max-height: 500px), (max-width: 640px) {
   .tv-party, .tv-where, .tv-version { display: none; }
   .tv-info { padding: 4px 6px; }
 }
-@media (max-width: 900px) {
+@media (max-width: 860px) {
   .tv-version { display: none; }
   .tv-cells { display: none; }
 }
