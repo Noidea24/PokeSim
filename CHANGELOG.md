@@ -2,6 +2,10 @@
 
 ## Unreleased (Noidea24 fork)
 
+- Add a TV view at `/tv`, linked from the Library: every running adventure on one screen with its live game, badges, Pokédex, location and party, laid out to give each screen the most room. Address options pick adventures, include stopped ones, choose streaming or still frames and hide the stats strip or top bar. See [TV view](docs/operations.md#tv-view).
+
+- Add `GET /api/v1/stats` and `GET /api/v1/stats/<id>`, read-only numbers for home dashboards: library totals plus each adventure's badges, Pokédex, Hall of Fame, money, play time, location and party. They reuse the reports games already send the Library, and a stopped adventure keeps its last numbers. See [Dashboard stats](docs/operations.md#dashboard-stats).
+
 - Add **Keep species names** to the nickname editor, off by default. With it on, Red, Blue and Yellow answer NO at every nickname prompt, Gold, Silver and Crystal confirm a blank name so the cartridge keeps the species name, and League rewards and Mew gifts keep species names too. The word lists stay saved, and existing Pokémon are never renamed.
 
 ## 0.6.2

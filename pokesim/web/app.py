@@ -85,7 +85,7 @@ def without_stored_pokemon(status):
 
 
 def status_summary(status):
-    """What the supervisor and backups read: playback, health and pace, with no game data."""
+    """What the supervisor and backups read: playback, health and pace, plus the few dashboard numbers."""
     if not isinstance(status, dict):
         return status
     game = status.get('game') or {}
@@ -94,8 +94,10 @@ def status_summary(status):
     watch = {'map': game.get('map'), 'owned': game.get('owned'),
              'badges': len(badges) if isinstance(badges, (list, tuple)) else badges,
              'hall_of_fame': game.get('hall_of_fame_count')}
+    from ..dashboard import card
     return {**{key: value for key, value in status.items() if key not in ('game', 'strategy')},
-            'game': {key: game[key] for key in ('map_name', 'playtime') if key in game}, 'watch': watch}
+            'game': {key: game[key] for key in ('map_name', 'playtime') if key in game}, 'watch': watch,
+            'stats': card(status.get('game'))}
 
 
 def fast_json(payload):

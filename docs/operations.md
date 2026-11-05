@@ -200,6 +200,58 @@ It is a compact overview, not the full journal or a raw diagnostic log. Every
 managed simulation page links back to the Library through the PokeSim logo.
 The adventure selector switches between games without returning to the Library.
 
+## Dashboard stats
+
+`GET /api/v1/stats` returns read-only numbers for a home dashboard such as Homepage,
+Home Assistant or your own page. It holds library totals (`running`, `adventures`,
+`badges`, `owned`, `hall_of_fame`, `playtime_seconds`) and a `list` with one entry per
+adventure: game, state, speed, trainer, badges out of `badge_total`, Pokédex owned and seen
+out of `dex_total`, Hall of Fame count, money, play time, location and party (species,
+nickname, level, Pokédex number, shiny). `GET /api/v1/stats/<adventure id>` returns one entry on its own.
+
+The numbers come from the reports each running game already sends the Library, so reading
+them costs nothing. A stopped adventure keeps the numbers from its last report, and an
+adventure that has never run reports `null`. Archived adventures are left out.
+
+Like every Library request, these need the address in `PUBLIC_URL`. A dashboard on another
+machine should call that address, for example `http://pokesim.lan/api/v1/stats`, not the
+container IP. A Homepage card:
+
+```yaml
+- PokeSim:
+    href: http://pokesim.lan
+    widget:
+      type: customapi
+      url: http://pokesim.lan/api/v1/stats
+      mappings:
+        - field: running
+          label: Running
+        - field: badges
+          label: Badges
+        - field: owned
+          label: Caught
+```
+
+## TV view
+
+Open `/tv` (or **TV view** in the Library) for every running adventure on one screen, made
+for a wall display or a small kiosk. Each tile shows the live game with its name, trainer,
+speed, location, play time, badges, Pokédex count and party. The grid picks the column count
+that gives every screen the most room, and the mouse pointer hides after three seconds.
+
+Options go in the address, for example `/tv?ids=abc,def&info=0`:
+
+| Option | Effect |
+| --- | --- |
+| `ids=a,b` | Only these adventures, in this order |
+| `all=1` | Also show stopped adventures, with their last numbers |
+| `stream=1` or `stream=0` | Live video, or still frames, for every tile. By default tiles stream when four or fewer are running, since browsers keep only about six connections to one server |
+| `fps=2` | Still frames per second when not streaming, 0.2 to 10 |
+| `info=0` | Game screens only |
+| `bare=1` | Hide the top bar too |
+
+On a Raspberry Pi or other low-power kiosk, `stream=0&fps=1` keeps the load light.
+
 ## Watchdog
 
 The Library checks every adventure once a minute and tells you about problems an adventure

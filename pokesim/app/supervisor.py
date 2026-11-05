@@ -581,6 +581,8 @@ class Supervisor:
                                'last_response': time.time(), 'league_rewards': status.get('league_rewards'),
                                'stalled': (status.get('progress') or {}).get('state') == 'stalled',
                                'settings_errors': settings_errors}
+                    if status.get('stats'):
+                        summary['stats'] = status['stats']
                     current = self.registry.adventure(aid)
                     summary['recent_activity'] = recent_activity(
                         current.get('summary') or {}, summary['activity'], summary['last_response'])

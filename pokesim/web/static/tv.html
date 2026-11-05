@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#0A0C0A">
+<title>TV · PokeSim</title>
+<link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+<link rel="preload" href="/static/fonts/pokesim-panel.woff2?v=2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="/static/tokens.css?v=panel-1">
+<link rel="stylesheet" href="/static/tv.css?v=tv-1">
+<script src="/static/tv.js?v=tv-1" defer></script>
+</head>
+<body class="tv">
+<header class="tv-bar" id="tv-bar">
+  <a class="tv-brand" href="/" title="Back to the Library">POKESIM <span>TV</span></a>
+  <p class="tv-totals" id="tv-totals" aria-live="polite"></p>
+  <div class="tv-actions">
+    <span class="tv-version">${app_version}</span>
+    <button type="button" class="tv-key" id="tv-full" aria-label="Full screen">FULL</button>
+  </div>
+</header>
+<main class="tv-grid" id="tv-grid" aria-label="Running adventures"></main>
+<p class="tv-empty" id="tv-empty" hidden>No adventures are running. Start one in the <a href="/">Library</a>.</p>
+</body>
+</html>

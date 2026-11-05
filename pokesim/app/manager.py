@@ -375,6 +375,14 @@ def create_app(manager, shutdown=lambda: None):
         from ..web.library import render_library
         return render_library(request.url.path.strip('/') or 'library')
 
+    @app.get('/tv', response_class=HTMLResponse)
+    def tv():
+        """Every running adventure on one screen, for a wall display or kiosk."""
+        import html
+        from ..build_info import version_label
+        from ..web.pages import template
+        return template('tv.html').substitute(app_version=html.escape(version_label()))
+
     @app.get('/trade')
     @app.get('/trading')
     def retired_trade_page():
@@ -411,6 +419,21 @@ def create_app(manager, shutdown=lambda: None):
         return {'adventures': [{**row, 'resources': manager.supervisor.resources(row['id'])}
                                for row in manager.registry.adventures()],
                 'attention': manager.watchdog.public()}
+
+    @app.get('/api/v1/stats')
+    def stats():
+        """Read-only numbers for home dashboards. A stopped adventure keeps its last report."""
+        from ..dashboard import library_stats
+        return library_stats(manager.registry.adventures(), manager.public_url)
+
+    @app.get('/api/v1/stats/{aid}')
+    def adventure_stats(aid: str):
+        from ..dashboard import adventure_stats as one
+        try:
+            row = manager.registry.adventure(aid)
+        except (KeyError, ValueError):
+            raise HTTPException(404, 'No adventure with that id') from None
+        return one(row, manager.public_url)
 
     @app.get('/api/v1/adventures/{aid}')
     def adventure(aid: str):
