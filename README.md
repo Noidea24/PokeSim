@@ -1,33 +1,82 @@
-# PokeSim (Noidea24 fork)
+<h1 align="center">PokeSim · Noidea24 fork</h1>
 
-This is a fork of [afk-sapien/PokeSim](https://github.com/afk-sapien/PokeSim). Everything below the
-line is the original project's README, and all credit for PokeSim goes to its author. This fork adds
-three features on top. Each is **off or unused until you choose it**, so with nothing turned on the
-app behaves exactly like the original.
+<p align="center">
+  A fork of <a href="https://github.com/afk-sapien/PokeSim"><b>afk-sapien/PokeSim</b></a> with three optional features.<br>
+  All credit for PokeSim itself goes to its author. <a href="#original-readme">Jump to the original README ↓</a>
+</p>
 
-> **Beta.** These additions are new and only lightly tested. They pass the project's automated tests,
-> and the nickname switch has been checked on a real Pokémon Red run, but Gold, Silver and Crystal,
-> gift Pokémon and long runs have not been watched end to end yet. Please open an issue on this fork,
-> not upstream, if something goes wrong.
+> [!WARNING]
+> **Beta.** These additions are new and only lightly tested. They pass the project's automated tests
+> and have run on live Pokémon Red and Crystal games, but gift Pokémon, League rewards and long runs
+> have not been watched end to end yet. Please report problems on
+> [this fork's issues](https://github.com/Noidea24/PokeSim/issues), not upstream.
 
-| Feature | What it does | How to use it | Tested so far |
-| --- | --- | --- | --- |
-| **Keep species names** | Skips every nickname, so new catches, gifts and League rewards keep names like PIKACHU. Red, Blue and Yellow answer NO at the prompt. Gold, Silver and Crystal confirm a blank name, which the game turns into the species name. Existing Pokémon are never renamed. | Settings, **Edit nickname pool**, check **Keep species names** | Red starter on a live run. Gen 2 not yet watched. |
-| **Dashboard stats** | Read-only JSON with library totals and each adventure's badges, Pokédex, Hall of Fame, money, play time, location and party. A stopped game keeps its last numbers. | Open `/api/v1/stats`, or `/api/v1/stats/<adventure id>`. [Details and a Homepage example](docs/operations.md#dashboard-stats) | Automated tests only |
-| **TV view** | Every running adventure on one screen, sized for a wall display or small kiosk, with live video, badges, Pokédex and party. | **TV view** in the Library, or `/tv`. [Address options](docs/operations.md#tv-view) | Automated and browser tests with sample games |
+> [!NOTE]
+> Each feature is **off or unused until you choose it**. With nothing turned on, the app behaves
+> exactly like the original, and the save format is unchanged, so a library can move between this
+> fork and the original in either direction.
+
+## What this fork adds
+
+### 1. Keep species names
+
+Skips every nickname, so new catches, gifts and League rewards keep names like PIKACHU instead of
+drawing from the nickname pool. Red, Blue and Yellow answer NO at the nickname prompt. Gold, Silver
+and Crystal confirm a blank name, which the game turns into the species name. Existing Pokémon are
+never renamed, and your word lists stay saved for when you turn it off.
+
+**Turn it on:** Settings, **Edit nickname pool**, check **Keep species names**, save.<br>
+**Tested:** starters and catches on live Red and Crystal runs.
+
+<img src="docs/images/fork/keep-species-names.png" alt="The nickname pool editor with the Keep species names box checked at the top" width="640">
+
+### 2. TV view
+
+Every running adventure on one screen, for a wall display, a spare monitor or a small kiosk. Each
+tile shows the live game with its trainer, location, play time, badges, Pokédex count and party, and
+the grid rearranges to give each game the most room. The pointer hides after three seconds and
+**FULL** goes full screen.
+
+**Open it:** **TV view** in the Library, or `/tv`. Options such as `?ids=`, `?stream=0&fps=1` for a
+Raspberry Pi and `?info=0` are listed in [TV view options](docs/operations.md#tv-view).<br>
+**Tested:** three live games side by side, plus browser tests at TV, kiosk and phone sizes.
+
+<img src="docs/images/fork/tv-view.png" alt="TV view showing two Red games in battle and a Crystal game on Route 29, each with badges, Pokédex count and party" width="100%">
+
+### 3. Dashboard stats
+
+Read-only JSON for home dashboards such as Homepage or Home Assistant: library totals (running,
+badges, caught, Hall of Fame, play time) and, for each adventure, its game, state, speed, trainer,
+badges, Pokédex, money, location and party. The numbers come from reports the games already send,
+so reading them costs nothing, and a stopped game keeps its last numbers.
+
+**Read it:** `/api/v1/stats` for everything, `/api/v1/stats/<adventure id>` for one game. A
+[Homepage card example](docs/operations.md#dashboard-stats) is in the docs.<br>
+**Tested:** live games and automated tests.
+
+## Running the fork
+
+Use `ghcr.io/noidea24/pokesim:latest` in place of `ghcr.io/afk-sapien/pokesim`. Every push to `main`
+rebuilds it for amd64 and arm64. To go back, switch the image back. Your saves work with both.
 
 **What changed in the code:** nickname handling in both generations' naming code, League reward and
-Mew gift naming, one new setting saved with the nickname settings, a small `pokesim/dashboard.py`
-module and two read-only routes, the TV page (`tv.html`, `tv.js`, `tv.css`), a checkbox and a link in
-the Library, tests for each, and a workflow that builds this fork's image. Nothing else is changed,
-and the save format is the same, so a library can move between this fork and the original. The full
-list is in [CHANGELOG.md](CHANGELOG.md).
+Mew gift naming, one new setting saved with the nickname settings, `pokesim/dashboard.py` and two
+read-only routes, the TV page (`tv.html`, `tv.js`, `tv.css`), a checkbox and a link in the Library,
+tests for each, and the workflow that builds this image. Nothing else is changed. The full list is in
+[CHANGELOG.md](CHANGELOG.md).
 
-**To run it,** use `ghcr.io/noidea24/pokesim:latest` in place of `ghcr.io/afk-sapien/pokesim`. Each
-push to `main` rebuilds it for amd64 and arm64. To go back, switch the image back. Your saves work
-with both.
+<br>
 
 ---
+---
+
+<a id="original-readme"></a>
+<h1 align="center">Original README</h1>
+<p align="center"><i>Everything below this line is afk-sapien's README for PokeSim, unchanged.</i></p>
+
+---
+
+# PokeSim
 
 **Pokémon Red, Blue, Yellow, Gold, Silver and Crystal that play themselves while you're away.**
 

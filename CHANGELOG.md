@@ -2,7 +2,7 @@
 
 ## Unreleased (Noidea24 fork, beta)
 
-These fork additions are beta: they pass the automated tests but have had little real-game use so far.
+These fork additions are beta: they pass the automated tests and have run on live Red and Crystal games, but have had little long-run use so far.
 
 - Add a TV view at `/tv`, linked from the Library: every running adventure on one screen with its live game, badges, Pokédex, location and party, laid out to give each screen the most room. Address options pick adventures, include stopped ones, choose streaming or still frames and hide the stats strip or top bar. See [TV view](docs/operations.md#tv-view).
 
