@@ -95,18 +95,31 @@ POKEMON_NAMES = CURATED_NAMES + _paired_names()
 
 NICKNAME_FIELDS = ('nickname_prefixes', 'nickname_suffixes', 'nickname_names',
                    'nickname_excluded_prefixes', 'nickname_excluded_suffixes', 'nickname_excluded_names')
+# On or off switches saved beside the word lists. They never change the pool itself.
+NICKNAME_FLAGS = ('nickname_disabled',)
 
 
 def nickname_defaults():
     return {name: [] for name in NICKNAME_FIELDS}
 
 
+def nicknames_disabled():
+    """True when Pokémon should keep their species names instead of drawing from the pool."""
+    from . import config
+    return bool(getattr(config, 'NICKNAME_DISABLED', False))
+
+
 def validate_parts(values):
     if (not isinstance(values, dict) or not {'nickname_prefixes', 'nickname_suffixes'} <= set(values)
-            or set(values) - set(NICKNAME_FIELDS)):
+            or set(values) - set(NICKNAME_FIELDS) - set(NICKNAME_FLAGS)):
         raise ValueError('Provide nickname_prefixes and nickname_suffixes with supported nickname settings')
     result = {}
     for field, parts in values.items():
+        if field in NICKNAME_FLAGS:
+            if type(parts) is not bool:
+                raise ValueError(f'{field} must be true or false')
+            result[field] = parts
+            continue
         full_names = field.endswith('_names')
         maximum = 500 if full_names else 100
         limit = NAME_LIMIT if full_names else 7

@@ -314,6 +314,8 @@ PC follow the same naming flow. Trainer names fit the seven-character limit and 
 nicknames fit the ten-character limit. Choices avoid repeats until their pool runs out.
 `SEED` makes the name sequence repeatable, and naming state is included in policy saves.
 Existing names are kept when resuming a game. Player and rival names are chosen on a new run.
+With **Keep species names** on (Settings, Edit nickname pool), every policy skips nicknames
+and new Pokémon keep their species names.
 
 New strategic adventures also choose a random starter. The choice is saved before the
 Pokémon is received, so restoring a checkpoint does not reroll it. `STARTER` selects a

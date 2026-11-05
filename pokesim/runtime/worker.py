@@ -173,7 +173,7 @@ def serve(bootstrap, parent_stream, ready_stream):
                 raise HTTPException(400, str(error)) from error
             def apply():
                 for name, values in parts.items():
-                    setattr(config, name.upper(), tuple(values))
+                    setattr(config, name.upper(), values if isinstance(values, bool) else tuple(values))
                 return {'ok': True}
             return runtime.call(apply)
 

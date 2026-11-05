@@ -91,3 +91,35 @@ def test_settings_panels_are_one_full_width_column(page, tmp_path, monkeypatch, 
         assert all(abs(x - layout['left']) <= 3 for x in layout['lefts']), layout
         assert layout['tops'] == sorted(set(layout['tops'])), layout
         assert not layout['overflow']
+
+
+@pytest.mark.parametrize('width', [320, 1280])
+def test_keep_species_names_switch_saves_and_reloads(page, tmp_path, monkeypatch, width):
+    from playwright.sync_api import expect
+    def factory(url):
+        manager = Manager(tmp_path / 'library', url)
+        monkeypatch.setattr(manager, 'start', lambda: None)
+        return create_app(manager)
+    with serve(factory) as url:
+        page.set_viewport_size({'width': width, 'height': 1000})
+        page.goto(url + '/settings')
+        edit = page.get_by_role('button', name='Edit nickname pool')
+        edit.click()
+        switch = page.get_by_label('Keep species names', exact=True)
+        expect(switch).not_to_be_checked()
+        switch.check()
+        page.get_by_role('button', name='Save nickname settings').click()
+        expect(page.locator('#nickname-dialog')).not_to_be_visible()
+        expect(page.locator('#nickname-summary')).to_contain_text('Nicknames are off')
+        page.reload()
+        expect(page.locator('#nickname-summary')).to_contain_text('Nicknames are off')
+        edit.click()
+        expect(switch).to_be_checked()
+        assert page.evaluate('document.documentElement.scrollWidth <= innerWidth')
+        folder = Path('/tmp/pokesim-nickname-ui')
+        folder.mkdir(exist_ok=True)
+        page.screenshot(path=str(folder / f'species-switch-{width}.png'))
+        page.get_by_role('button', name='Reset editor to defaults').click()
+        expect(switch).not_to_be_checked()
+        page.get_by_role('button', name='Save nickname settings').click()
+        expect(page.locator('#nickname-summary')).to_contain_text('available names')

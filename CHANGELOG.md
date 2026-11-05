@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased (Noidea24 fork)
+
+- Add **Keep species names** to the nickname editor, off by default. With it on, Red, Blue and Yellow answer NO at every nickname prompt, Gold, Silver and Crystal confirm a blank name so the cartridge keeps the species name, and League rewards and Mew gifts keep species names too. The word lists stay saved, and existing Pokémon are never renamed.
+
 ## 0.6.2
 
 - Publish the container image for linux/arm64 as well as linux/amd64, so it runs on a Raspberry Pi 4 or 5, an ARM NAS or an Apple silicon Mac without emulation. The release workflow builds and tests each architecture on its own native runner, pushes each as `<version>-linux-<arch>` and joins them into one multi-platform tag, then checks anonymously that the tag serves both and that each pulls the tested image ([#269](https://github.com/afk-sapien/PokeSim/issues/269)).

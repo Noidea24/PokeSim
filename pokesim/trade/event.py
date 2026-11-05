@@ -39,7 +39,8 @@ def gift_slot(seed, species=MEW, *, random_name=False):
     struct[27:29] = digest[:2]
     struct[29:29 + len(moves)] = bytes(MOVES[move]['pp'] for move in moves)
     nickname = base['name']
-    if random_name:
+    from ..nicknames import nicknames_disabled
+    if random_name and not nicknames_disabled():
         from ..nicknames import configured_pool
         pool = configured_pool()
         # Keep naming independent of the draw and stable across delivery retries.

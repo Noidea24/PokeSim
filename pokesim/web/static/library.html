@@ -75,7 +75,7 @@
 
 <dialog id="nickname-dialog" class="sheet" aria-labelledby="nickname-heading"><form id="nickname-form">
 <div class="sheet-head"><h2 class="legend legend--ink" id="nickname-heading">Nickname pool</h2><button type="button" class="key key--close" data-close="nickname-dialog" aria-label="Close">×</button></div>
-<div class="sheet-body"><p>Used for new nicknames in every adventure. Existing Pokémon keep their names.</p><p class="note">Separate entries with commas or new lines. Letters A to Z only. Full names fit the game's 10-letter limit.</p>
+<div class="sheet-body"><label class="check"><input id="nickname-disabled" type="checkbox" data-owner> Keep species names</label><p class="note">Skips every nickname, so new catches, gifts and League rewards keep names like PIKACHU. The word lists below are kept for when you turn this off.</p><p>Used for new nicknames in every adventure. Existing Pokémon keep their names.</p><p class="note">Separate entries with commas or new lines. Letters A to Z only. Full names fit the game's 10-letter limit.</p>
 <div class="nickname-fields">
 <label class="field"><span class="micro">Extra prefixes</span><textarea aria-label="Extra prefixes" id="nickname-prefixes" rows="3" maxlength="1000" placeholder="CHAOS, SPICY" data-owner></textarea><span class="note">Up to 7 letters each.</span></label>
 <label class="field"><span class="micro">Extra suffixes</span><textarea aria-label="Extra suffixes" id="nickname-suffixes" rows="3" maxlength="1000" placeholder="GOOSE, GREMLIN" data-owner></textarea><span class="note">Up to 7 letters each.</span></label>

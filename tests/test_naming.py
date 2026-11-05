@@ -217,3 +217,53 @@ def test_nickname_empty_pool_and_long_full_names_are_rejected():
         validate_parts({**nickname_defaults(), 'nickname_names': ['ELEVENABCDE']})
     result = validate_parts({**nickname_defaults(), 'nickname_names': ['TENLETTERS']})
     assert result['nickname_names'] == ['TENLETTERS']
+
+
+def nickname_prompt(menu_item):
+    mem = fake_mem({8: "               YES", 9: "               NO", 14: "Give a NICKNAME"})
+    mem[W_TILEMAP + (8 + menu_item) * 20 + 14] = 0xED
+    mem[W_CURRENT_MENU_ITEM] = menu_item
+    return mem
+
+
+@pytest.mark.parametrize("policy_name", POLICIES)
+def test_all_policies_decline_nicknames_when_they_are_off(policy_name, monkeypatch):
+    from pokesim import config
+    monkeypatch.setattr(config, 'NICKNAME_DISABLED', True)
+    policy = make_policy(policy_name, 1)
+    ctx = PolicyContext(snap(in_battle=1), 100, 0, nickname_prompt(0))
+    assert policy.step(ctx)[0].button == "down"
+    ctx.mem = nickname_prompt(1)
+    assert policy.step(ctx)[0].button == "a"
+
+
+def test_naming_screen_left_blank_when_nicknames_are_off(monkeypatch):
+    from pokesim import config
+    monkeypatch.setattr(config, 'NICKNAME_DISABLED', True)
+    controller = NamingController(1)
+    assert controller.step(Screen(grid('NICKNAME', entered='ME')), snap()).button == 'b'
+    assert controller.target == ''
+    assert controller.step(Screen(grid('NICKNAME')), snap()).button == 'start'
+    # Trainer names are still typed.
+    other = NamingController(1)
+    other.step(Screen(grid('YOUR NAME')), snap())
+    assert other.target in TRAINER_NAMES
+
+
+def test_nickname_switch_validates_and_keeps_the_pool():
+    from pokesim.nicknames import nickname_defaults, validate_parts
+    on = validate_parts({**nickname_defaults(), 'nickname_disabled': True})
+    assert on['nickname_disabled'] is True and on['nickname_names'] == []
+    for value in ('yes', 1, None):
+        with pytest.raises(ValueError, match='true or false'):
+            validate_parts({**nickname_defaults(), 'nickname_disabled': value})
+
+
+def test_league_gift_keeps_species_name_when_nicknames_are_off(monkeypatch):
+    from pokesim import config
+    from pokesim.trade.event import gift_slot
+    named = gift_slot('seed-1', 25, random_name=True)
+    monkeypatch.setattr(config, 'NICKNAME_DISABLED', True)
+    plain = gift_slot('seed-1', 25, random_name=True)
+    assert plain.nickname == gift_slot('seed-1', 25).nickname
+    assert plain.struct == named.struct and plain.nickname != named.nickname

@@ -483,3 +483,15 @@ def test_a_slow_game_trade_history_does_not_stall_the_library(client, monkeypatc
     other, elapsed, slow = asyncio.run(run())
     assert other.status_code == 200 and elapsed < 2
     assert slow.status_code == 200 and slow.json()['adventure']['id'] == row['id']
+
+
+def test_nickname_switch_saves_and_reads_back(client):
+    client, manager = client
+    headers = login(client, manager)
+    assert client.get('/api/v1/settings').json().get('nickname_disabled') in (None, False)
+    body = {'nickname_prefixes': [], 'nickname_suffixes': [], 'nickname_disabled': True}
+    saved = client.patch('/api/v1/settings', json=body, headers=headers)
+    assert saved.status_code == 200 and saved.json()['nickname_disabled'] is True
+    assert manager.registry.setting('nickname_parts', {})['nickname_disabled'] is True
+    bad = client.patch('/api/v1/settings', json={**body, 'nickname_disabled': 'yes'}, headers=headers)
+    assert bad.status_code == 409

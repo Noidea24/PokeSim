@@ -9,7 +9,7 @@ from pokecore.textmatch import ScreenText
 from ..nicknames import (
     POKEMON_NAMES as POKEMON_NAMES, CURATED_NAMES as CURATED_NAMES,
     NAME_LIMIT as NAME_LIMIT, NAME_PREFIXES as NAME_PREFIXES, NAME_SUFFIXES as NAME_SUFFIXES,
-    TRAINER_NAMES, configured_pool,
+    TRAINER_NAMES, configured_pool, nicknames_disabled,
 )
 
 
@@ -39,6 +39,9 @@ class NamingController:
         text = ScreenText(scr.text.upper())
         if not scr.naming:
             self.target = self.subject = None
+            if scr.cursor and scr.yes_no and "NICKNAME" in text and nicknames_disabled():
+                # Answer NO, so the game keeps the species name.
+                return Action("a" if scr.menu_index else "down", 6, 24)
             if scr.cursor and ((scr.yes_no and "NICKNAME" in text) or
                                (not snapshot.started and "NEW NAME" in text)):
                 return Action("up" if scr.menu_index else "a", 6, 24)
@@ -55,9 +58,15 @@ class NamingController:
             preferred = (getattr(config, 'TRAINER_NAME', '') if subject == 'player' else
                          getattr(config, 'RIVAL_NAME', '') if subject == 'rival' else '')
             self.target = preferred or self.rng.choice(choices or pool)
+            if subject == "pokemon" and nicknames_disabled():
+                # Reached only if the prompt was missed. A blank entry keeps the species name.
+                self.target = ""
             self.used.add(self.target)
             self.subject = subject
 
+        if not self.target:
+            # Erase anything typed, then confirm the blank entry.
+            return Action("b" if scr.rows[2][10:20].strip() else "start")
         action = name_step(scr.rows, scr.cursor, self.target,
                            limit=10 if subject == "pokemon" else 7)
         return Action(*action) if action else None

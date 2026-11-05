@@ -26,6 +26,7 @@ class SimulationSettings:
     nickname_excluded_prefixes: tuple[str, ...] = ()
     nickname_excluded_suffixes: tuple[str, ...] = ()
     nickname_excluded_names: tuple[str, ...] = ()
+    nickname_disabled: bool = False
     trainer_name: str = ''
     rival_name: str = ''
     starter: str = 'random'
@@ -62,12 +63,12 @@ class SimulationSettings:
     def __post_init__(self):
         from ..palettes import validate_palette
         validate_palette(self.palette)
-        from ..nicknames import NICKNAME_FIELDS, validate_parts, validate_trainer_name
+        from ..nicknames import NICKNAME_FIELDS, NICKNAME_FLAGS, validate_parts, validate_trainer_name
         for name in ('trainer_name', 'rival_name'):
             object.__setattr__(self, name, validate_trainer_name(getattr(self, name)))
-        parts = validate_parts({name: getattr(self, name) for name in NICKNAME_FIELDS})
+        parts = validate_parts({name: getattr(self, name) for name in NICKNAME_FIELDS + NICKNAME_FLAGS})
         for name, values in parts.items():
-            object.__setattr__(self, name, tuple(values))
+            object.__setattr__(self, name, values if name in NICKNAME_FLAGS else tuple(values))
         for name in ('rom_path', 'data_dir', 'game_data_dir'):
             value = getattr(self, name)
             if not isinstance(value, str) or not Path(value).is_absolute():

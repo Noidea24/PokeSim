@@ -110,3 +110,15 @@ def test_runtime_intro_names_validate_and_roundtrip(settings):
     for bad in ('TOOLONGGG', 'A B', 'ASH!', 'ß', None, 5):
         with pytest.raises(ValueError):
             SimulationSettings.from_dict({**settings, 'trainer_name': bad})
+
+
+def test_nickname_switch_is_a_validated_setting(tmp_path):
+    import pytest
+    from pokesim.runtime.settings import SimulationSettings
+    rom = tmp_path / 'rom.gb'
+    rom.write_bytes(b'\0' * 32)
+    base = dict(rom_path=str(rom), data_dir=str(tmp_path), game_data_dir=str(tmp_path))
+    assert SimulationSettings(**base).nickname_disabled is False
+    assert SimulationSettings(**base, nickname_disabled=True).nickname_disabled is True
+    with pytest.raises(ValueError):
+        SimulationSettings(**base, nickname_disabled='1')

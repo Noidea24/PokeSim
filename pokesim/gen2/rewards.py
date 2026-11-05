@@ -17,9 +17,9 @@ MYTHICAL = 'gen2-mythical-gift-v1'
 
 
 def gift(memory, data, species, seed, box, position):
-    """Core's box gift, nicknamed from the configured nickname pool."""
-    from ..nicknames import configured_pool
-    box_gift(memory, data, species, seed, box, position, nicknames=configured_pool())
+    """Core's box gift, nicknamed from the configured nickname pool, or the species name when nicknames are off."""
+    from ..nicknames import configured_pool, nicknames_disabled
+    box_gift(memory, data, species, seed, box, position, nicknames=None if nicknames_disabled() else configured_pool())
 
 
 def deliver(emu):

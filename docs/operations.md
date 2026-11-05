@@ -34,6 +34,13 @@ without these settings continue choosing intro names randomly.
 
 ## Custom nicknames
 
+To turn nicknames off, open **Settings → Edit nickname pool**, check **Keep species names**
+and save. Red, Blue and Yellow answer NO at the nickname prompt. Gold, Silver and Crystal
+confirm a blank name, which the cartridge turns into the species name. League rewards and
+Mew gifts also keep their species names. The word lists stay saved for when you turn it back
+off. Like other nickname settings, it applies to future names in every adventure and never
+renames existing Pokémon.
+
 Open Library **Settings → Edit nickname pool**. Add prefixes, suffixes, or complete
 names. Uncheck built-in entries you do not want, or paste exclusions under
 **Excluded words and exact names**. Prefix and suffix exclusions affect generated

@@ -1062,7 +1062,10 @@
     nicknameSettings = settings
     nicknameFields.forEach(field => { $('#nickname-' + field).value = (settings['nickname_' + field.replace('-', '_')] || []).join('\n') })
     const catalog = settings.nickname_catalog || {}
-    $('#nickname-summary').textContent = `${Number(catalog.available || 0).toLocaleString()} available names. Applies to all adventures.`
+    $('#nickname-disabled').checked = settings.nickname_disabled === true
+    $('#nickname-summary').textContent = settings.nickname_disabled === true
+      ? 'Nicknames are off. New Pokémon keep their species names in all adventures.'
+      : `${Number(catalog.available || 0).toLocaleString()} available names. Applies to all adventures.`
     nicknameKinds.forEach(kind => {
       $('#nickname-default-' + kind).innerHTML = (catalog[kind] || []).map(word => `<label class="check"><input type="checkbox" value="${esc(word)}" data-owner>${esc(word)}</label>`).join('')
       $('#nickname-default-' + kind).querySelectorAll('input').forEach(input => { input.onchange = () => {
@@ -1086,6 +1089,7 @@
     event.preventDefault()
     act(async () => {
       const values = Object.fromEntries(nicknameFields.map(field => ['nickname_' + field.replace('-', '_'), nicknameParts('#nickname-' + field)]))
+      values.nickname_disabled = $('#nickname-disabled').checked
       const result = await write('/api/v1/settings', values, 'PATCH')
       renderNicknameSettings(result)
       $('#nickname-dialog').close()
@@ -1094,6 +1098,7 @@
   }
   $('#nickname-reset').onclick = () => {
     nicknameFields.forEach(field => { $('#nickname-' + field).value = '' })
+    $('#nickname-disabled').checked = false
     nicknamePreview()
     $('#nickname-dialog .dialog-feedback').textContent = 'Defaults loaded in the editor. Save to apply them.'
   }

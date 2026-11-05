@@ -4,7 +4,7 @@ from __future__ import annotations
 import random
 
 from .. import config
-from ..nicknames import TRAINER_NAMES, configured_pool
+from ..nicknames import TRAINER_NAMES, configured_pool, nicknames_disabled
 
 
 # Typing one name takes well under this many presses. Past it, accept what is on screen.
@@ -43,6 +43,9 @@ class Naming:
             occupied = self.used | {snapshot.player_name, snapshot.rival_name} | {mon.nick for mon in snapshot.party}
             self.target = preferred or self.rng.choice([name for name in pool if name not in occupied] or pool)
             self.target = self.target.upper()[:10 if subject == 0 else 7]
+            if subject == 0 and nicknames_disabled():
+                # The cartridge turns a blank nickname into the species name.
+                self.target = ''
             self.subject = subject
             self.used.add(self.target)
         length = mem.byte('wNamingScreenCurNameLength')
