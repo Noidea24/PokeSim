@@ -105,7 +105,7 @@ def test_keep_species_names_switch_saves_and_reloads(page, tmp_path, monkeypatch
         page.goto(url + '/settings')
         edit = page.get_by_role('button', name='Edit nickname pool')
         edit.click()
-        switch = page.get_by_label('Keep species names', exact=True)
+        switch = page.get_by_label('Keep species names BETA', exact=True)
         expect(switch).not_to_be_checked()
         switch.check()
         page.get_by_role('button', name='Save nickname settings').click()

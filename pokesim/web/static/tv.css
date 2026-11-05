@@ -29,6 +29,7 @@ body.bare .tv-bar { display: none; }
   white-space: nowrap;
 }
 .tv-brand span { color: var(--signal); }
+.tv-brand small { font-family: var(--font-mono); font-size: var(--f-micro); color: var(--ink-3); }
 .tv-totals {
   flex: 1;
   min-width: 0;

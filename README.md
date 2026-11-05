@@ -1,9 +1,33 @@
-# PokeSim
+# PokeSim (Noidea24 fork)
 
-> **This is a fork of [afk-sapien/PokeSim](https://github.com/afk-sapien/PokeSim)** with a few extra
-> features, each off by default so the app behaves like the original until you turn it on.
-> See the top of [CHANGELOG.md](CHANGELOG.md) for what this fork adds. To run it, use the image
-> `ghcr.io/noidea24/pokesim:latest` in place of `ghcr.io/afk-sapien/pokesim`.
+This is a fork of [afk-sapien/PokeSim](https://github.com/afk-sapien/PokeSim). Everything below the
+line is the original project's README, and all credit for PokeSim goes to its author. This fork adds
+three features on top. Each is **off or unused until you choose it**, so with nothing turned on the
+app behaves exactly like the original.
+
+> **Beta.** These additions are new and only lightly tested. They pass the project's automated tests,
+> and the nickname switch has been checked on a real Pokémon Red run, but Gold, Silver and Crystal,
+> gift Pokémon and long runs have not been watched end to end yet. Please open an issue on this fork,
+> not upstream, if something goes wrong.
+
+| Feature | What it does | How to use it | Tested so far |
+| --- | --- | --- | --- |
+| **Keep species names** | Skips every nickname, so new catches, gifts and League rewards keep names like PIKACHU. Red, Blue and Yellow answer NO at the prompt. Gold, Silver and Crystal confirm a blank name, which the game turns into the species name. Existing Pokémon are never renamed. | Settings, **Edit nickname pool**, check **Keep species names** | Red starter on a live run. Gen 2 not yet watched. |
+| **Dashboard stats** | Read-only JSON with library totals and each adventure's badges, Pokédex, Hall of Fame, money, play time, location and party. A stopped game keeps its last numbers. | Open `/api/v1/stats`, or `/api/v1/stats/<adventure id>`. [Details and a Homepage example](docs/operations.md#dashboard-stats) | Automated tests only |
+| **TV view** | Every running adventure on one screen, sized for a wall display or small kiosk, with live video, badges, Pokédex and party. | **TV view** in the Library, or `/tv`. [Address options](docs/operations.md#tv-view) | Automated and browser tests with sample games |
+
+**What changed in the code:** nickname handling in both generations' naming code, League reward and
+Mew gift naming, one new setting saved with the nickname settings, a small `pokesim/dashboard.py`
+module and two read-only routes, the TV page (`tv.html`, `tv.js`, `tv.css`), a checkbox and a link in
+the Library, tests for each, and a workflow that builds this fork's image. Nothing else is changed,
+and the save format is the same, so a library can move between this fork and the original. The full
+list is in [CHANGELOG.md](CHANGELOG.md).
+
+**To run it,** use `ghcr.io/noidea24/pokesim:latest` in place of `ghcr.io/afk-sapien/pokesim`. Each
+push to `main` rebuilds it for amd64 and arm64. To go back, switch the image back. Your saves work
+with both.
+
+---
 
 **Pokémon Red, Blue, Yellow, Gold, Silver and Crystal that play themselves while you're away.**
 
