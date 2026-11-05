@@ -1,5 +1,10 @@
 # PokeSim
 
+> **This is a fork of [afk-sapien/PokeSim](https://github.com/afk-sapien/PokeSim)** with a few extra
+> features, each off by default so the app behaves like the original until you turn it on.
+> See the top of [CHANGELOG.md](CHANGELOG.md) for what this fork adds. To run it, use the image
+> `ghcr.io/noidea24/pokesim:latest` in place of `ghcr.io/afk-sapien/pokesim`.
+
 **Pokémon Red, Blue, Yellow, Gold, Silver and Crystal that play themselves while you're away.**
 
 ![A live Crystal adventure with all 16 badges and 251 Pokémon registered, battling Bruno of the Elite Four](docs/images/gen2-live.gif)
