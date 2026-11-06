@@ -892,6 +892,9 @@
       $('#settings-training-patience').value = game.settings?.training_patience ?? 0
       for (const id of ['battle-profile', 'gym-caution', 'level-margin', 'training-patience']) $(`#settings-${id}`).disabled = running(game)
       showProfile(johto)
+      $('#settings-priorities').value = game.settings?.priorities || 'balanced'
+      $('#settings-priorities').disabled = running(game)
+      showPriorities(johto)
       $('#settings-event-steps-label').textContent = johto ? 'Steps between gift, trade, Sudowoodo and Snorlax returns' : 'Steps between gift, trade and Snorlax returns'
       $('#adventure-settings').showModal()
       return
@@ -941,6 +944,21 @@
     $('#settings-profile-note').textContent = PROFILE_NOTES[profile] +
       (johto ? ' Gold, Silver and Crystal only train before Falkner, so here it mostly changes that.' : '')
   }
+  // Noidea24 fork (beta): what it prefers after the story. Story, healing and supplies always come first.
+  const PRIORITY_NOTES = {
+    balanced: 'The original: new Pokédex entries first, then the marathon, then training and better copies, then filler.',
+    collector: 'New Pokédex entries first, then better copies ahead of the marathon, and less wandering.',
+    trainer: 'Training, level 100s and perfect copies ahead of new Pokédex entries, and less wandering.',
+    explorer: 'New Pokédex entries first, then exploring and other filler, and about twice as much wandering and chatting.',
+  }
+  function showPriorities(johto) {
+    $('#settings-priorities-note').textContent = PRIORITY_NOTES[$('#settings-priorities').value] +
+      ' It takes effect once the story is done.' + (johto ? ' Gold, Silver and Crystal do not wander, so here only the order changes.' : '')
+  }
+  $('#settings-priorities').onchange = () => {
+    const game = adventures.find(item => item.id === $('#settings-id').value)
+    showPriorities(['gold', 'silver', 'crystal'].includes(game?.version))
+  }
   $('#settings-battle-profile').onchange = () => {
     const game = adventures.find(item => item.id === $('#settings-id').value)
     showProfile(['gold', 'silver', 'crystal'].includes(game?.version))
@@ -952,6 +970,7 @@
       if (game && !['gold', 'silver', 'crystal'].includes(game.version)) rewards.fair_wild_dvs = $('#settings-fair-wild-dvs').checked
       if (game && !running(game)) {
         rewards.battle_profile = $('#settings-battle-profile').value
+        rewards.priorities = $('#settings-priorities').value
         if (rewards.battle_profile === 'custom') Object.assign(rewards, {gym_caution: Number($('#settings-gym-caution').value),
           level_margin: Number($('#settings-level-margin').value), training_patience: Number($('#settings-training-patience').value)})
       }

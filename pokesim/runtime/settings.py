@@ -49,6 +49,7 @@ class SimulationSettings:
     gym_caution: int = 75
     level_margin: int = 10
     training_patience: int = 0
+    priorities: str = 'balanced'
     seed: int | None = None
     fast_text: bool = True
     battle_animations: bool = True
@@ -103,6 +104,9 @@ class SimulationSettings:
         from ..caution import CHOICES as PROFILE_CHOICES, LIMITS as PROFILE_LIMITS
         if self.battle_profile not in PROFILE_CHOICES:
             raise ValueError('Unknown battle_profile')
+        from ..priorities import CHOICES as PRIORITY_CHOICES
+        if self.priorities not in PRIORITY_CHOICES:
+            raise ValueError('Unknown priorities')
         ranges = {
             **PROFILE_LIMITS,
             'speed': (0, 16), 'autosave_seconds': (1, 86400),

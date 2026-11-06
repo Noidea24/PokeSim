@@ -66,6 +66,8 @@ BATTLE_PROFILE = _env('BATTLE_PROFILE', 'balanced')
 GYM_CAUTION = int(_env('GYM_CAUTION', '75'))
 LEVEL_MARGIN = int(_env('LEVEL_MARGIN', '10'))
 TRAINING_PATIENCE = int(_env('TRAINING_PATIENCE', '0'))
+# Noidea24 fork (beta): balanced, collector, trainer or explorer, see pokesim/priorities.py.
+PRIORITIES = _env('PRIORITIES', 'balanced')
 EVENT_RETENTION_DAYS = int(_env("EVENT_RETENTION_DAYS", "0"))
 EVENT_ATTACHMENT_KEEP = int(_env("EVENT_ATTACHMENT_KEEP", "500"))
 

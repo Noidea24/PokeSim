@@ -36,6 +36,7 @@ from ..strategy_data import ITEMS, MAPS, MOVES, SPECIES, WORLD, event_set
 from ..pc_list import guarded
 from ..shortcuts import ShortcutRunner, gen1_ui
 from .. import config
+from ..priorities import curiosity as scaled_curiosity
 
 EXPLORATION_CHANCE = 0.12
 # A trip to buy a TM or Champion shop supplies is expected to take 20000 frames. It is dropped once it
@@ -1162,7 +1163,7 @@ class StrategicPolicy(Policy):
                 social = None if goal.key == 'collect_pickup' or (self.collection.project or {}).get('method') in ('train', 'marathon') or legendary_project(self.collection.project) else self._social_interaction(s, mem)
                 if social:
                     return social
-            curiosity = 0 if goal.key in ("heal", "restock", "buy_tm", "collect_pickup", "collect_hunt") or (self.collection.project or {}).get('method') in ('train', 'marathon') or legendary_project(self.collection.project) else EXPLORATION_CHANCE
+            curiosity = 0 if goal.key in ("heal", "restock", "buy_tm", "collect_pickup", "collect_hunt") or (self.collection.project or {}).get('method') in ('train', 'marathon') or legendary_project(self.collection.project) else scaled_curiosity(EXPLORATION_CHANCE)
             if s.map in MANSION_MAPS:
                 direction = self.mansion.route(s, goal.targets, self.nav)
                 if direction == "switch":
@@ -1728,7 +1729,7 @@ class StrategicPolicy(Policy):
             self.mode = 'training a partner' if key == 'development' else 'following a curiosity'
             self.nav.issued(pos, direction, s.frame)
             return tap(direction, 8, 12)
-        if s.frame < self.next_conversation or self.rng.random() > EXPLORATION_CHANCE * 0.15:
+        if s.frame < self.next_conversation or self.rng.random() > scaled_curiosity(EXPLORATION_CHANCE) * 0.15:
             return None
         w = WORLD.get(s.map, {})
         if any(p.status for p in s.party) or max((p.hp / max(1, p.max_hp) for p in s.party), default=0) < 0.8:

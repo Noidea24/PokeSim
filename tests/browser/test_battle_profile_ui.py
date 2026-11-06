@@ -52,3 +52,31 @@ def test_battle_style_saves_and_reloads(page, tmp_path, monkeypatch, width):
         page.get_by_role('button', name='Save adventure settings', exact=True).click()
         expect(page.locator('#adventure-settings')).not_to_be_visible()
         assert not {'battle_profile', 'gym_caution', 'level_margin', 'training_patience'} & set(settings())
+
+
+def test_priorities_save_and_reload(page, tmp_path, monkeypatch):
+    from playwright.sync_api import expect
+    from conftest import serve
+    from pokesim.app.manager import Manager, create_app
+    from pokesim.app.registry import identifier
+    captured = {}
+
+    def factory(url):
+        manager = Manager(tmp_path / 'library', url)
+        monkeypatch.setattr(manager, 'start', lambda: None)
+        manager.registry.add_rom('fixture', 'sha1', 'crystal')
+        captured.update(manager=manager, row=manager.registry.create('Crystal', 'fixture', {}, identifier()))
+        return create_app(manager)
+    with serve(factory) as url:
+        page.set_viewport_size({'width': 390, 'height': 900})
+        page.goto(url)
+        page.locator('[data-action="settings"]').click()
+        choice = page.locator('#settings-priorities')
+        expect(choice).to_have_value('balanced')
+        choice.select_option('trainer')
+        expect(page.locator('#settings-priorities-note')).to_contain_text('do not wander')
+        page.get_by_role('button', name='Save adventure settings', exact=True).click()
+        expect(page.locator('#adventure-settings')).not_to_be_visible()
+        assert captured['manager'].registry.adventure(captured['row']['id'])['settings']['priorities'] == 'trainer'
+        page.locator('[data-action="settings"]').click()
+        expect(choice).to_have_value('trainer')

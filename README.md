@@ -77,6 +77,26 @@ is won. Gold, Silver and Crystal only train before Falkner, so there it mostly c
 **Set it:** stop the adventure, open its settings, choose **Battle style (beta)**, save.<br>
 **Tested:** automated tests of every gate, including a Sabrina case like a stalled Yellow run.
 
+### 5. Priorities (beta)
+
+Once the story is done, the bot picks what to do next by tier: new Pokédex entries, then the
+marathon, then upgrades (training, level 100s, perfect and better copies), then filler such as
+exploring. Story, healing and supplies always come first. Priorities reorder those four tiers and
+scale how often Red, Blue and Yellow wander, explore or stop to chat:
+
+| Priorities | Order after the story | Wandering |
+| --- | --- | --- |
+| **Balanced** (default) | new entries, marathon, upgrades, filler | as in the original |
+| **Collector** | new entries, upgrades, marathon, filler | half |
+| **Trainer** | upgrades, new entries, marathon, filler | half |
+| **Explorer** | new entries, filler, marathon, upgrades | about twice |
+
+The original already puts new entries first, so Collector differs from Balanced only a little.
+Gold, Silver and Crystal do not wander, so there only the order changes.
+
+**Set it:** stop the adventure, open its settings, choose **Priorities (beta)**, save.<br>
+**Tested:** automated tests of the order and wandering for every choice.
+
 ### Smaller fixes and settings
 
 - `STREAM_FPS` (up to 60) now sets every game's live picture rate, not only the Library's.

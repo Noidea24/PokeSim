@@ -51,7 +51,9 @@ class Candidate:
 
 
 def _order(candidate):
-    return candidate.tier, -candidate.score, candidate.key
+    # Noidea24 fork (beta): the priorities profile may reorder the tiers below story and upkeep.
+    from ..priorities import rank as tier_rank
+    return tier_rank(candidate.tier), -candidate.score, candidate.key
 
 
 def rank(candidates):
