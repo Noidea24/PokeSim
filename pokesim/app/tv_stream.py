@@ -5,7 +5,8 @@ them, and party sprites and stats then never load. Here the Library reads each g
 ``/stream`` on the server side and sends the newest frame of each down a single response.
 
 Each frame on the wire is a header line, ``<adventure id> <byte length>\\n``, followed by that
-many bytes of PNG. A game that stops, or fails to connect, simply sends no more frames.
+many bytes of PNG. When a game's stream ends, as it does while two games trade or a game
+restarts, the feed looks the game up again and reconnects, so the tile carries on by itself.
 """
 import asyncio
 import logging
@@ -18,12 +19,12 @@ LENGTH = re.compile(rb'content-length:\s*(\d+)', re.I)
 MAX_FRAME = 1 << 20
 
 
-async def child_frames(client, child, aid, latest, changed, viewer_header):
-    """Keep ``latest[aid]`` set to the newest frame from one game's multipart stream."""
+async def child_frames(client, child, aid, latest, changed, viewer_header, quiet=10):
+    """Copy one game's multipart stream into ``latest[aid]`` until it ends or goes quiet."""
     url = httpx.URL(child.url).copy_with(path='/stream')
     headers = {'Authorization': 'Bearer ' + child.token, viewer_header: '1'}
     try:
-        async with client.stream('GET', url, headers=headers, timeout=httpx.Timeout(10, read=None)) as response:
+        async with client.stream('GET', url, headers=headers, timeout=httpx.Timeout(10, read=quiet)) as response:
             if response.status_code != 200:
                 return
             buffer = b''
@@ -52,11 +53,29 @@ async def child_frames(client, child, aid, latest, changed, viewer_header):
         log.debug('TV feed for %s ended', aid, exc_info=True)
 
 
-async def combined(client, children, fps, viewer_header, closing):
-    """Yield framed PNGs for every game in ``children`` ({aid: child}) at up to ``fps``."""
+async def follow(client, lookup, aid, latest, changed, viewer_header, closing, retry):
+    """Keep one game's frames coming, reconnecting after trades and restarts.
+
+    ``lookup(aid)`` returns the game's current worker, or raises while it is stopped or busy.
+    With ``retry`` set to None it connects once, which the tests use.
+    """
+    while not closing():
+        try:
+            child = lookup(aid)
+        except (RuntimeError, KeyError, ValueError):
+            child = None
+        if child is not None:
+            await child_frames(client, child, aid, latest, changed, viewer_header)
+        if retry is None:
+            return
+        await asyncio.sleep(retry)
+
+
+async def combined(client, ids, lookup, fps, viewer_header, closing, retry=1.0):
+    """Yield framed PNGs for every game in ``ids`` at up to ``fps``."""
     latest, sent, changed = {}, {}, asyncio.Event()
-    tasks = [asyncio.create_task(child_frames(client, child, aid, latest, changed, viewer_header))
-             for aid, child in children.items()]
+    tasks = [asyncio.create_task(follow(client, lookup, aid, latest, changed, viewer_header, closing, retry))
+             for aid in ids]
     delay = 1 / fps
     try:
         while not closing():
@@ -74,7 +93,7 @@ async def combined(client, children, fps, viewer_header, closing):
             await asyncio.sleep(delay)
             if not changed.is_set():
                 try:
-                    await asyncio.wait_for(changed.wait(), timeout=5)
+                    await asyncio.wait_for(changed.wait(), timeout=2)
                 except asyncio.TimeoutError:
                     yield b''       # a keep-alive so a dropped viewer is noticed
     finally:

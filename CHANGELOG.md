@@ -4,7 +4,7 @@
 
 These fork additions are beta: they pass the automated tests and have run on live Red and Crystal games, but have had little long-run use so far.
 
-- TV view: live video for every game now arrives on one connection (`/api/v1/tv/stream`) and is drawn into each tile, so six or more live games no longer use up the browser's connections and leave party sprites and stats unable to load. Every game streams live by default, `?stream=0` still gives still frames, and `?fps=` sets the rate.
+- TV view: live video for every game now arrives on one connection (`/api/v1/tv/stream`) and is drawn into each tile, so six or more live games no longer use up the browser's connections and leave party sprites and stats unable to load. Every game streams live by default, `?stream=0` still gives still frames, and `?fps=` sets the rate. When two games trade or a game restarts, its tile reconnects by itself instead of freezing until the page is reloaded.
 
 - Add a TV view at `/tv`, linked from the Library: every running adventure on one screen with its live game, badges, Pokédex, location and party, laid out to give each screen the most room. Address options pick adventures, include stopped ones, choose streaming or still frames and hide the stats strip or top bar. See [TV view](docs/operations.md#tv-view).
 

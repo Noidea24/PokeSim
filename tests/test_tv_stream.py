@@ -40,9 +40,11 @@ def parse(raw):
 
 
 async def collect(streams, children):
+    def lookup(aid):
+        return children[aid]
     async with httpx.AsyncClient(transport=transport(streams)) as client:
         out = b''
-        async for chunk in combined(client, children, 60, 'X-PokeSim-Viewer', lambda: False):
+        async for chunk in combined(client, list(children), lookup, 60, 'X-PokeSim-Viewer', lambda: False, retry=None):
             out += chunk
         return parse(out)
 
@@ -68,6 +70,28 @@ def test_a_game_that_refuses_or_stops_does_not_break_the_others():
     streams = {'a.test': [part(b'\x89PNG-red')]}
     frames = asyncio.run(collect(streams, {'red': child('a.test'), 'gone': child('missing.test')}))
     assert frames == [('red', b'\x89PNG-red')]
+
+
+def test_a_game_that_trades_reconnects_at_its_new_worker():
+    """A trade ends the game's stream. The feed looks the game up again and carries on."""
+    streams = {'old.test': [part(b'\x89PNG-before')], 'new.test': [part(b'\x89PNG-after')]}
+    workers = iter([child('old.test'), RuntimeError('trading'), child('new.test')])
+
+    def lookup(aid):
+        worker = next(workers, None)
+        if worker is None or isinstance(worker, Exception):
+            raise RuntimeError('busy')
+        return worker
+
+    async def run():
+        seen = []
+        async with httpx.AsyncClient(transport=transport(streams)) as client:
+            async for chunk in combined(client, ['red'], lookup, 60, 'X-PokeSim-Viewer',
+                                        lambda: b'after' in b''.join(seen), retry=0.01):
+                seen.append(chunk)
+        return parse(b''.join(seen))
+    frames = asyncio.run(asyncio.wait_for(run(), 10))
+    assert frames == [('red', b'\x89PNG-before'), ('red', b'\x89PNG-after')]
 
 
 def test_oversized_frames_end_that_game_only():
@@ -110,9 +134,16 @@ def test_library_route_merges_live_worker_streams(tmp_path, monkeypatch):
             time.sleep(0.05)
         return server, SimpleNamespace(url=f'http://127.0.0.1:{port}', token='secret')
 
+    import json
     servers = {name: worker(name) for name in ('red', 'gold')}
     manager = Manager(tmp_path, 'http://testserver')
     monkeypatch.setattr(manager, 'start', lambda: None)
+    with manager.registry.db:
+        for aid in ('red', 'gold', 'stopped'):
+            manager.registry.db.execute(
+                'INSERT INTO adventures (id, campaign_id, name, rom_id, version, settings, desired_state, state, '
+                'generation, summary, created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?)',
+                (aid, aid, aid, 'rom', 'red', '{}', 'running', 'running', 'g', json.dumps({}), 0))
     def child(aid):
         if aid not in servers:
             raise RuntimeError('stopped')
@@ -120,11 +151,16 @@ def test_library_route_merges_live_worker_streams(tmp_path, monkeypatch):
     monkeypatch.setattr(manager.supervisor, 'child', child)
     try:
         with TestClient(create_app(manager)) as client:
-            response = client.get('/api/v1/tv/stream?ids=red,gold,stopped&fps=60')
+            assert client.get('/api/v1/tv/stream?ids=nothere').status_code == 409
+            timer = threading.Timer(1.5, lambda: setattr(manager, 'closing', True))
+            timer.start()
+            response = client.get('/api/v1/tv/stream?ids=red,gold,stopped,nothere&fps=60')
+            timer.join()
             assert response.status_code == 200
             assert response.headers['content-type'].startswith('application/x-pokesim-frames')
             assert 'content-encoding' not in response.headers
-            frames = parse(response.content)
+            raw = response.content
+            frames = parse(raw)
     finally:
         for server, _ in servers.values():
             server.should_exit = True

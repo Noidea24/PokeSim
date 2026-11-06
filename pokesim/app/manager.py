@@ -432,20 +432,18 @@ def create_app(manager, shutdown=lambda: None):
         """Every listed running game's live picture down one connection, for the TV view."""
         from .. import config
         from .tv_stream import combined
-        children = {}
-        for aid in dict.fromkeys(filter(None, ids.split(',')[:24])):
-            try:
-                children[aid] = manager.supervisor.child(aid)
-            except (RuntimeError, KeyError, ValueError):
-                continue
-        if not children:
-            raise HTTPException(409, 'None of those adventures is running')
+        wanted = list(dict.fromkeys(filter(None, ids.split(',')[:24])))
+        known = {row['id'] for row in await run_in_threadpool(manager.registry.adventures)}
+        wanted = [aid for aid in wanted if aid in known]
+        if not wanted:
+            raise HTTPException(409, 'None of those adventures exists')
         if app.state.children is None:
             app.state.children = httpx.AsyncClient(
                 trust_env=False, timeout=httpx.Timeout(20, read=30),
                 limits=httpx.Limits(max_connections=None, max_keepalive_connections=32))
         rate = min(60, max(1, fps or config.STREAM_FPS))
-        return StreamingResponse(combined(app.state.children, children, rate, VIEWER_HEADER, lambda: manager.closing),
+        return StreamingResponse(combined(app.state.children, wanted, manager.supervisor.child, rate, VIEWER_HEADER,
+                                          lambda: manager.closing),
                                  media_type='application/x-pokesim-frames',
                                  headers={'Cache-Control': 'no-store', 'X-Accel-Buffering': 'no'})
 
