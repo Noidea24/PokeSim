@@ -43,7 +43,7 @@ jobs:
           push: true
           build-args: |
             VERSION=${{ steps.names.outputs.version }}
-            REVISION=${{ steps.names.outputs.short }}
+            REVISION=${{ github.sha }}
           labels: |
             org.opencontainers.image.source=https://github.com/${{ github.repository }}
             org.opencontainers.image.description=PokeSim fork with extra optional features
