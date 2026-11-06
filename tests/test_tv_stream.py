@@ -249,3 +249,22 @@ def test_every_frame_gets_through_when_games_run_at_the_feed_rate():
         got = [data for aid, data in frames if aid == name]
         assert len(got) >= 29, (name, len(got))      # at most the very last can be cut off
         assert got == sorted(got)
+
+
+def test_games_follow_stream_fps_unless_they_set_their_own(tmp_path, monkeypatch):
+    """STREAM_FPS reached only the Library. A game with no frame rate now uses it, and the
+    original's 15 still applies when it is unset."""
+    from pokesim import config
+    from pokesim.app.manager import Manager
+    from pokesim.runtime.settings import SimulationSettings
+    manager = Manager(tmp_path, 'http://testserver')
+    monkeypatch.setattr(manager.assets, 'rom_path', lambda rom: tmp_path / 'rom.gb')
+    plain = {'settings': {'speed': 4}, 'rom_id': 'rom'}
+    own = {'settings': {'speed': 4, 'stream_fps': 20}, 'rom_id': 'rom'}
+    aid = 'ab' * 16
+    monkeypatch.setattr(config, 'STREAM_FPS', 15)
+    assert manager.supervisor._settings(aid, plain)['stream_fps'] == 15
+    monkeypatch.setattr(config, 'STREAM_FPS', 60)
+    assert manager.supervisor._settings(aid, plain)['stream_fps'] == 60
+    assert manager.supervisor._settings(aid, own)['stream_fps'] == 20
+    assert SimulationSettings.__dataclass_fields__['stream_fps'].default == 15

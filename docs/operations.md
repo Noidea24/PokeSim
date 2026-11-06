@@ -254,7 +254,8 @@ Live video for every game arrives on one connection, `/api/v1/tv/stream`, where 
 reads each game's stream and passes on the newest frame of each. Browsers keep only about six
 connections open to one server, so one stream per tile would leave none for party sprites and
 stats once six games are running. For fast games, raise `STREAM_FPS` in the environment (up to
-60) so 4x and 8x stay readable. On a Raspberry Pi or other low-power kiosk, `stream=0&fps=1`
+60) so 4x and 8x stay readable. In this fork every game without its own `stream_fps` setting
+follows it. Six games at 60 send about 1 MB/s, so a weak Wi-Fi link may do better at 30. On a Raspberry Pi or other low-power kiosk, `stream=0&fps=1`
 keeps the load light.
 
 ## Watchdog

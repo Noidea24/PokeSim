@@ -216,10 +216,18 @@ class Supervisor:
         reading = usage.sample() if usage is not None else None
         return {**(reading or {}), **child.pace.sample()}
 
+    @staticmethod
+    def _stream_fps():
+        from .. import config
+        return int(config.STREAM_FPS)
+
     def _settings(self, aid, adventure):
         settings = {**adventure['settings'],
                     **self.registry.setting('nickname_parts', {}),
                     'speed': adventure['settings'].get('speed', 1),
+                    # Noidea24 fork: a game with no frame rate of its own follows the stack's
+                    # STREAM_FPS, which otherwise reached only the Library. Unset, both stay 15.
+                    'stream_fps': adventure['settings'].get('stream_fps') or self._stream_fps(),
                     'rom_path': str(self.assets.rom_path(adventure['rom_id'])),
                     'data_dir': str(self.registry.root / 'adventures' / aid),
                     'game_data_dir': str(self.assets.game_data_dir),
