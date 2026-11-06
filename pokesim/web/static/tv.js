@@ -3,10 +3,12 @@
 // Options, all in the address:
 //   ?ids=a,b     only these adventures, in this order
 //   ?all=1       include stopped adventures (they show their last numbers)
-//   ?stream=1    live video for every tile, ?stream=0 still frames for every tile.
-//                By default tiles stream when there are four or fewer, because browsers
-//                hold only about six open connections to one server.
-//   ?fps=2       still frames per second when not streaming (0.2 to 10)
+//   ?stream=0    still frames instead of live video, for a slow kiosk or network.
+//                Live video for every game arrives on one connection (/api/v1/tv/stream),
+//                because browsers hold only about six open connections to one server and
+//                one stream per tile would leave none for sprites and stats.
+//   ?fps=30      frames per second: live 1 to 60 (default: the server's STREAM_FPS),
+//                stills 0.2 to 10 (default 2)
 //   ?info=0      screens only, no name and stats strip
 //   ?bare=1      hide the top bar too
 (() => {
@@ -14,7 +16,9 @@
   const flag = (name) => params.get(name)
   const only = (flag('ids') || '').split(',').map((s) => s.trim()).filter(Boolean)
   const showAll = flag('all') === '1'
-  const fps = Math.min(10, Math.max(0.2, Number(flag('fps')) || 2))
+  const live = flag('stream') !== '0' && 'ReadableStream' in window && 'createImageBitmap' in window
+  const fps = live ? Math.min(60, Math.max(1, Math.round(Number(flag('fps')) || 0))) || 0
+    : Math.min(10, Math.max(0.2, Number(flag('fps')) || 2))
   const ACTIVE = new Set(['running', 'paused', 'manual', 'trading'])
   const STATE_LABEL = { paused: 'PAUSED', manual: 'MANUAL', trading: 'TRADING', stopped: 'STOPPED', failed: 'FAILED' }
   const SPRITES = 'rom-portraits-1'
@@ -23,8 +27,8 @@
   const totals = document.getElementById('tv-totals')
   const tiles = new Map()
   let order = ''
-  let streaming = false
   let pollTimer = null
+  let feed = null          // { key, abort } for the live connection
 
   if (flag('bare') === '1') document.body.classList.add('bare')
   if (flag('info') === '0') document.body.classList.add('no-info')
@@ -56,11 +60,11 @@
     const tile = el('a', 'tv-tile')
     tile.href = gameBase(adventure.id)
     const screen = el('div', 'tv-screen')
-    const img = el('img')
-    img.alt = `${adventure.name} game screen`
-    img.addEventListener('load', () => img.classList.add('ready'))
+    const img = el('canvas')
     img.width = 160
     img.height = 144
+    img.setAttribute('role', 'img')
+    img.setAttribute('aria-label', `${adventure.name} game screen`)
     const state = el('span', 'tv-state')
     state.hidden = true
     screen.append(img, state)
@@ -72,7 +76,8 @@
     const party = el('div', 'tv-party')
     info.append(name, game, where, meters, party)
     tile.append(screen, info)
-    return { tile, img, state, name, game, where, meters, party, partyKey: '', active: null }
+    return { tile, img, state, name, game, where, meters, party, partyKey: '', active: null,
+             pending: null, drawing: false }
   }
 
   function update(view, a) {
@@ -102,31 +107,93 @@
     view.active = ACTIVE.has(a.state)
   }
 
-  function setScreens() {
-    for (const [id, view] of tiles) {
-      if (!view.active) { view.img.removeAttribute('src'); view.img.classList.remove('ready'); continue }
-      if (streaming) {
-        const src = `${gameBase(id)}stream`
-        if (!view.img.src.endsWith(src)) view.img.src = src
-      } else if (view.img.src.endsWith('/stream')) {
-        view.img.removeAttribute('src')
+  // Draw one PNG frame into a tile. If frames arrive faster than they decode, keep only the newest.
+  function show(view, blob) {
+    if (view.drawing) { view.pending = blob; return }
+    view.drawing = true
+    createImageBitmap(blob).then((bitmap) => {
+      const canvas = view.img
+      if (canvas.width !== bitmap.width || canvas.height !== bitmap.height) {
+        canvas.width = bitmap.width
+        canvas.height = bitmap.height
       }
-    }
-    clearInterval(pollTimer)
-    pollTimer = streaming ? null : setInterval(pollFrames, 1000 / fps)
-    if (!streaming) pollFrames()
+      const ctx = canvas.getContext('2d')
+      ctx.imageSmoothingEnabled = false
+      ctx.drawImage(bitmap, 0, 0)
+      bitmap.close?.()
+      canvas.classList.add('ready')
+    }).catch(() => {}).finally(() => {
+      view.drawing = false
+      const next = view.pending
+      view.pending = null
+      if (next) show(view, next)
+    })
   }
 
-  // Load the next still off screen and swap it in, so a slow frame never blanks the tile.
+  function setScreens() {
+    for (const view of tiles.values()) if (!view.active) view.img.classList.remove('ready')
+    if (live) return openFeed()
+    clearInterval(pollTimer)
+    pollTimer = setInterval(pollFrames, 1000 / fps)
+    pollFrames()
+  }
+
+  // One connection carries every live game: "<id> <length>\n" then that many PNG bytes.
+  function openFeed() {
+    const ids = [...tiles].filter(([, view]) => view.active).map(([id]) => id)
+    const key = ids.join(',')
+    if (feed && feed.key === key && !feed.ended) return
+    feed?.abort.abort()
+    feed = null
+    if (!ids.length) return
+    const abort = new AbortController()
+    const current = { key, abort, ended: false }
+    feed = current
+    const query = new URLSearchParams({ ids: key })
+    if (fps) query.set('fps', String(fps))
+    readFeed(`/api/v1/tv/stream?${query}`, abort.signal)
+      .catch(() => {})
+      .finally(() => { current.ended = true })
+  }
+
+  async function readFeed(url, signal) {
+    const response = await fetch(url, { cache: 'no-store', signal })
+    if (!response.ok || !response.body) return
+    const reader = response.body.getReader()
+    let buffer = new Uint8Array(0)
+    for (;;) {
+      const { value, done } = await reader.read()
+      if (done) return
+      const joined = new Uint8Array(buffer.length + value.length)
+      joined.set(buffer)
+      joined.set(value, buffer.length)
+      buffer = joined
+      for (;;) {
+        const newline = buffer.indexOf(10)
+        if (newline < 0) break
+        const [id, size] = new TextDecoder().decode(buffer.subarray(0, newline)).split(' ')
+        const length = Number(size)
+        if (!id || !Number.isFinite(length)) return
+        if (buffer.length < newline + 1 + length) break
+        const frame = buffer.slice(newline + 1, newline + 1 + length)
+        buffer = buffer.slice(newline + 1 + length)
+        const view = tiles.get(id)
+        if (view && view.active && !document.hidden) show(view, new Blob([frame], { type: 'image/png' }))
+      }
+    }
+  }
+
+  // Fetch the next still and draw it once it has arrived, so a slow frame never blanks the tile.
   function pollFrames() {
     if (document.hidden) return
     for (const [id, view] of tiles) {
       if (!view.active || view.loading) continue
       view.loading = true
-      const next = new Image()
-      next.onload = () => { view.img.src = next.src; view.loading = false }
-      next.onerror = () => { view.loading = false }
-      next.src = `${gameBase(id)}frame.jpg?t=${Date.now()}`
+      fetch(`${gameBase(id)}frame.jpg?t=${Date.now()}`, { cache: 'no-store' })
+        .then((response) => (response.ok ? response.blob() : null))
+        .then((blob) => { if (blob) show(view, blob) })
+        .catch(() => {})
+        .finally(() => { view.loading = false })
     }
   }
 
@@ -167,8 +234,6 @@
       grid.replaceChildren(...list.map((a) => tiles.get(a.id).tile))
     }
     list.forEach((a) => update(tiles.get(a.id), a))
-    const live = list.filter((a) => ACTIVE.has(a.state)).length
-    streaming = flag('stream') === '1' || (flag('stream') !== '0' && live <= 4)
     setScreens()
     empty.hidden = list.length > 0
     grid.hidden = list.length === 0

@@ -37,9 +37,13 @@ tile shows the live game with its trainer, location, play time, badges, Pokédex
 the grid rearranges to give each game the most room. The pointer hides after three seconds and
 **FULL** goes full screen.
 
-**Open it:** **TV view** in the Library, or `/tv`. Options such as `?ids=`, `?stream=0&fps=1` for a
-Raspberry Pi and `?info=0` are listed in [TV view options](docs/operations.md#tv-view).<br>
-**Tested:** three live games side by side, plus browser tests at TV, kiosk and phone sizes.
+All games' live video shares one connection, so even six or more stream smoothly while party
+sprites and stats keep loading. For 4x and 8x games, set `STREAM_FPS=60` in the environment.
+
+**Open it:** **TV view** in the Library, or `/tv`. Options such as `?ids=`, `?fps=`, `?stream=0&fps=1`
+for a Raspberry Pi and `?info=0` are listed in [TV view options](docs/operations.md#tv-view).<br>
+**Tested:** six live games across Red, Blue, Yellow, Gold, Silver and Crystal, plus browser tests at
+TV, kiosk and phone sizes.
 
 <img src="docs/images/fork/tv-view.png" alt="TV view showing two Red games in battle and a Crystal game on Route 29, each with badges, Pokédex count and party" width="100%">
 

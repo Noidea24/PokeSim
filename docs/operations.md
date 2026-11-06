@@ -245,12 +245,17 @@ Options go in the address, for example `/tv?ids=abc,def&info=0`:
 | --- | --- |
 | `ids=a,b` | Only these adventures, in this order |
 | `all=1` | Also show stopped adventures, with their last numbers |
-| `stream=1` or `stream=0` | Live video, or still frames, for every tile. By default tiles stream when four or fewer are running, since browsers keep only about six connections to one server |
-| `fps=2` | Still frames per second when not streaming, 0.2 to 10 |
+| `stream=0` | Still frames instead of live video, for a slow kiosk or network |
+| `fps=30` | Frames per second. Live video 1 to 60, defaulting to the server's `STREAM_FPS`. Still frames 0.2 to 10, default 2 |
 | `info=0` | Game screens only |
 | `bare=1` | Hide the top bar too |
 
-On a Raspberry Pi or other low-power kiosk, `stream=0&fps=1` keeps the load light.
+Live video for every game arrives on one connection, `/api/v1/tv/stream`, where the Library
+reads each game's stream and passes on the newest frame of each. Browsers keep only about six
+connections open to one server, so one stream per tile would leave none for party sprites and
+stats once six games are running. For fast games, raise `STREAM_FPS` in the environment (up to
+60) so 4x and 8x stay readable. On a Raspberry Pi or other low-power kiosk, `stream=0&fps=1`
+keeps the load light.
 
 ## Watchdog
 

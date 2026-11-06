@@ -10,6 +10,19 @@ from pokesim.dashboard import card
 from conftest import serve
 
 FRAME = Path(__file__).parents[2] / 'pokesim' / 'web' / 'static' / 'favicon.svg'
+GAMES = ['red', 'blue', 'yellow', 'gold', 'silver', 'crystal']
+
+
+def png(shade):
+    import io
+    from PIL import Image
+    out = io.BytesIO()
+    Image.new('RGB', (160, 144), (shade, 120, 60)).save(out, 'PNG')
+    return out.getvalue()
+
+
+def feed(ids):
+    return b''.join(f'{aid} {len(data)}\n'.encode() + data for aid, data in ((aid, png(30 * i)) for i, aid in enumerate(ids)))
 
 
 def add(manager, aid, version, badges, state='running', paused=False):
@@ -36,11 +49,12 @@ def test_tv_grid_fits_the_screen(page, tmp_path, monkeypatch, width, height):
         add(manager, 'gone', 'yellow', 8, state='stopped')
         return create_app(manager)
     with serve(factory) as url:
-        page.route('**/frame.jpg*', lambda route: route.fulfill(path=str(FRAME), content_type='image/svg+xml'))
+        page.route('**/frame.jpg*', lambda route: route.fulfill(body=png(90), content_type='image/png'))
         page.route('**/sprites/**', lambda route: route.fulfill(path=str(FRAME), content_type='image/svg+xml'))
         page.set_viewport_size({'width': width, 'height': height})
         page.goto(url + '/tv?stream=0')
         expect(page.locator('.tv-tile')).to_have_count(3)
+        expect(page.locator('.tv-screen canvas.ready')).to_have_count(3)
         expect(page.locator('#tv-totals')).to_contain_text('3 running')
         expect(page.locator('.tv-tile').nth(1).locator('.tv-state')).to_have_text('PAUSED')
         assert page.evaluate('document.documentElement.scrollWidth <= innerWidth')
@@ -51,3 +65,35 @@ def test_tv_grid_fits_the_screen(page, tmp_path, monkeypatch, width, height):
         page.goto(url + '/tv?stream=0&all=1&ids=gone,red')
         expect(page.locator('.tv-tile')).to_have_count(2)
         expect(page.locator('.tv-tile').first.locator('.tv-state')).to_have_text('STOPPED')
+
+
+def test_six_live_games_share_one_connection_and_sprites_still_load(page, tmp_path, monkeypatch):
+    from playwright.sync_api import expect
+    def factory(url):
+        manager = Manager(tmp_path / 'library', url)
+        monkeypatch.setattr(manager, 'start', lambda: None)
+        for aid in GAMES:
+            add(manager, aid, aid, 1)
+        return create_app(manager)
+    requests = []
+    with serve(factory) as url:
+        def fulfil_feed(route):
+            requests.append(route.request.url)
+            route.fulfill(body=feed(GAMES), content_type='application/x-pokesim-frames')
+        page.route('**/api/v1/tv/stream*', fulfil_feed)
+        page.route('**/sprites/**', lambda route: route.fulfill(path=str(FRAME), content_type='image/svg+xml'))
+        page.route('**/stream', lambda route: route.abort())      # no per-tile streams any more
+        page.route('**/frame.jpg*', lambda route: route.abort())
+        page.set_viewport_size({'width': 1280, 'height': 900})
+        page.goto(url + '/tv?fps=30')
+        expect(page.locator('.tv-tile')).to_have_count(6)
+        expect(page.locator('.tv-screen canvas.ready')).to_have_count(6)
+        page.wait_for_function("[...document.querySelectorAll('.tv-party img')].length === 6 && "
+                               "[...document.querySelectorAll('.tv-party img')].every(i => i.complete && i.naturalWidth > 0)")
+        from urllib.parse import parse_qs, urlsplit
+        query = parse_qs(urlsplit(requests[0]).query)
+        assert len(requests) == 1 and set(query['ids'][0].split(',')) == set(GAMES) and query['fps'] == ['30']
+        drawn = page.evaluate("""() => [...document.querySelectorAll('.tv-screen canvas')].map(c =>
+            [...c.getContext('2d').getImageData(80, 72, 1, 1).data].slice(0, 3).join(','))""")
+        order = page.evaluate("[...document.querySelectorAll('.tv-tile')].map(t => new URL(t.href).pathname.split('/')[2])")
+        assert {aid: drawn[i] for i, aid in enumerate(order)} == {aid: f'{30 * i},120,60' for i, aid in enumerate(GAMES)}

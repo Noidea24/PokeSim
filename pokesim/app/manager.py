@@ -364,7 +364,8 @@ def create_app(manager, shutdown=lambda: None):
     # Compress text on the way out. Frames and portraits are already compressed, and
     # the live stream must reach the browser frame by frame.
     app.add_middleware(GZipMiddleware, minimum_size=1024, compresslevel=6,
-                       exclude_content_types=(*DEFAULT_EXCLUDED_CONTENT_TYPES, 'multipart/x-mixed-replace'))
+                       exclude_content_types=(*DEFAULT_EXCLUDED_CONTENT_TYPES, 'multipart/x-mixed-replace',
+                                              'application/x-pokesim-frames'))
 
     app.mount('/static', StaticFiles(directory=STATIC), name='static')
 
@@ -425,6 +426,28 @@ def create_app(manager, shutdown=lambda: None):
         """Read-only numbers for home dashboards. A stopped adventure keeps its last report."""
         from ..dashboard import library_stats
         return library_stats(manager.registry.adventures(), manager.public_url)
+
+    @app.get('/api/v1/tv/stream')
+    async def tv_stream(ids: str = '', fps: int = 0):
+        """Every listed running game's live picture down one connection, for the TV view."""
+        from .. import config
+        from .tv_stream import combined
+        children = {}
+        for aid in dict.fromkeys(filter(None, ids.split(',')[:24])):
+            try:
+                children[aid] = manager.supervisor.child(aid)
+            except (RuntimeError, KeyError, ValueError):
+                continue
+        if not children:
+            raise HTTPException(409, 'None of those adventures is running')
+        if app.state.children is None:
+            app.state.children = httpx.AsyncClient(
+                trust_env=False, timeout=httpx.Timeout(20, read=30),
+                limits=httpx.Limits(max_connections=None, max_keepalive_connections=32))
+        rate = min(60, max(1, fps or config.STREAM_FPS))
+        return StreamingResponse(combined(app.state.children, children, rate, VIEWER_HEADER, lambda: manager.closing),
+                                 media_type='application/x-pokesim-frames',
+                                 headers={'Cache-Control': 'no-store', 'X-Accel-Buffering': 'no'})
 
     @app.get('/api/v1/stats/{aid}')
     def adventure_stats(aid: str):

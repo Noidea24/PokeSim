@@ -88,7 +88,7 @@ body.bare .tv-bar { display: none; }
   background: var(--well);
   position: relative;
 }
-.tv-screen img {
+.tv-screen canvas {
   position: absolute;
   inset: 0;
   width: 100%;
@@ -97,7 +97,7 @@ body.bare .tv-bar { display: none; }
   image-rendering: pixelated;
   opacity: 0;
 }
-.tv-screen img.ready { opacity: 1; }
+.tv-screen canvas.ready { opacity: 1; }
 .tv-state {
   position: absolute;
   top: 6px;

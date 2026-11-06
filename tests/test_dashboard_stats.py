@@ -78,3 +78,12 @@ def test_tv_page_is_served_with_its_assets(tmp_path, monkeypatch):
         assert client.get('/static/tv.js').status_code == 200
         assert client.get('/static/tv.css').status_code == 200
         assert 'href="/tv"' in client.get('/').text
+
+
+def test_tv_stream_needs_a_running_adventure(tmp_path, monkeypatch):
+    manager = Manager(tmp_path, 'http://testserver')
+    monkeypatch.setattr(manager, 'start', lambda: None)
+    with TestClient(create_app(manager)) as client:
+        assert client.get('/api/v1/tv/stream?ids=nothere').status_code == 409
+        assert client.get('/api/v1/tv/stream').status_code == 409
+        assert client.get('/api/v1/tv/stream?ids=a', headers={'Host': 'evil.example'}).status_code == 403
