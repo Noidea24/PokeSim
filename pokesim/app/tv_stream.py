@@ -76,25 +76,35 @@ async def combined(client, ids, lookup, fps, viewer_header, closing, retry=1.0):
     latest, sent, changed = {}, {}, asyncio.Event()
     tasks = [asyncio.create_task(follow(client, lookup, aid, latest, changed, viewer_header, closing, retry))
              for aid in ids]
-    delay = 1 / fps
+    # Frames go out as soon as each game makes one, so the games' own timing decides the pace.
+    # A fixed send interval here would beat against theirs, dropping frames and spacing the rest
+    # unevenly. ``fps`` only caps a game that makes frames faster than the viewer asked for.
+    gap = 0.9 / fps
+    last = {}
+    loop = asyncio.get_running_loop()
     try:
         while not closing():
             finished = all(task.done() for task in tasks)
             changed.clear()
-            parts = []
+            now = loop.time()
+            parts, held = [], []
             for aid, frame in list(latest.items()):
-                if sent.get(aid) is not frame:
-                    sent[aid] = frame
-                    parts.append(f'{aid} {len(frame)}\n'.encode() + frame)
+                if sent.get(aid) is frame:
+                    continue
+                if now - last.get(aid, 0) < gap:
+                    held.append(gap - (now - last[aid]))
+                    continue
+                sent[aid], last[aid] = frame, now
+                parts.append(f'{aid} {len(frame)}\n'.encode() + frame)
             if parts:
                 yield b''.join(parts)
-            if finished:
+            if finished and not held:
                 break
-            await asyncio.sleep(delay)
-            if not changed.is_set():
-                try:
-                    await asyncio.wait_for(changed.wait(), timeout=2)
-                except asyncio.TimeoutError:
+            timeout = min(held) if held else 2
+            try:
+                await asyncio.wait_for(changed.wait(), timeout=timeout)
+            except asyncio.TimeoutError:
+                if not held:
                     yield b''       # a keep-alive so a dropped viewer is noticed
     finally:
         for task in tasks:

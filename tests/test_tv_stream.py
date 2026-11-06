@@ -217,3 +217,35 @@ def test_a_quiet_live_stream_ends_without_an_error(tmp_path, monkeypatch, caplog
         server.should_exit = True
     assert 'went quiet' in caplog.text
     assert not [r for r in caplog.records if r.levelno >= logging.ERROR]
+
+
+def test_every_frame_gets_through_when_games_run_at_the_feed_rate():
+    """Games publishing at the same rate as the feed, with uneven timing, lose no frames."""
+    import random
+
+    def timed(name, count, rate, seed):
+        rng = random.Random(seed)
+
+        async def body():
+            for i in range(count):
+                yield part(f'{name}-{i:03d}'.encode())
+                await asyncio.sleep((1 / rate) * rng.uniform(0.7, 1.3))
+        return body
+
+    async def handler(request):
+        return httpx.Response(200, content=games[request.url.host]())
+    names = [f'g{i}' for i in range(6)]
+    games = {f'{name}.test': timed(name, 30, 15, i) for i, name in enumerate(names)}
+
+    async def run():
+        out = b''
+        async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client:
+            async for chunk in combined(client, names, lambda aid: child(f'{aid}.test'), 15,
+                                        'X-PokeSim-Viewer', lambda: False, retry=None):
+                out += chunk
+        return parse(out)
+    frames = asyncio.run(asyncio.wait_for(run(), 20))
+    for name in names:
+        got = [data for aid, data in frames if aid == name]
+        assert len(got) >= 29, (name, len(got))      # at most the very last can be cut off
+        assert got == sorted(got)
