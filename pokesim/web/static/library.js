@@ -953,7 +953,7 @@
   }
   function showPriorities(johto) {
     $('#settings-priorities-note').textContent = PRIORITY_NOTES[$('#settings-priorities').value] +
-      ' It takes effect once the story is done.' + (johto ? ' Gold, Silver and Crystal do not wander, so here only the order changes.' : '')
+      ' It takes effect once the story is done.' + (johto ? ' Gold, Silver and Crystal do not wander. Outside Balanced, Crystal keeps working while it waits for a trainer to call with an item, instead of standing by a PC.' : '')
   }
   $('#settings-priorities').onchange = () => {
     const game = adventures.find(item => item.id === $('#settings-id').value)

@@ -47,3 +47,21 @@ def test_validation():
         priorities.validate({'priorities': 'speedrun'})
     from pokesim.app.manager import Manager
     assert Manager.validate_adventure_settings({'priorities': 'explorer'})['priorities'] == 'explorer'
+
+
+def test_phone_waits_run_in_the_background_outside_balanced(monkeypatch):
+    """Crystal's wait for a trainer's call: Balanced stands by a PC as before, the others keep working."""
+    from pokesim.gen2.collection import passive_goal, PHONE_WAIT
+    monkeypatch.setattr(config, 'PRIORITIES', 'balanced')
+    assert passive_goal(PHONE_WAIT) is False
+    assert passive_goal('collection_hatch') is True
+    for name in ('collector', 'trainer', 'explorer'):
+        monkeypatch.setattr(config, 'PRIORITIES', name)
+        assert passive_goal(PHONE_WAIT) is True
+        assert passive_goal('collection_phone_gift') is False      # collecting the stone still runs
+
+
+def test_the_ladder_asks_passive_goal_for_every_rung():
+    import inspect
+    from pokesim.gen2 import collection
+    assert 'passive=passive_goal(goal.key)' in inspect.getsource(collection.Ladder.offer)

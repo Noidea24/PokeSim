@@ -42,6 +42,11 @@ def curiosity(chance):
     return min(0.5, chance * CURIOSITY[profile()])
 
 
+def background_phone_waits():
+    """Whether Crystal waits for a trainer's call while doing other work. Balanced stands by a PC."""
+    return profile() != 'balanced'
+
+
 def validate(values):
     result = dict(values)
     name = result.get('priorities', 'balanced')

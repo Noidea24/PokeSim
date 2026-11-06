@@ -591,6 +591,15 @@ FAR_MAPS = 50
 # Goals that accrue on any walk, which the arbiter never picks. The Day Care counts the steps of any
 # walk, so pacing Goldenrod for its egg runs only when no other rung has work.
 PASSIVE = frozenset(('collection_hatch',))
+# Noidea24 fork (beta): a trainer's call reaches the player anywhere with phone service, so outside
+# Balanced priorities the wait for it runs in the background, as the Day Care walk does. Collecting
+# the item once the call comes is an upkeep step and still runs first.
+PHONE_WAIT = 'collection_phone_wait'
+
+
+def passive_goal(key):
+    from ..priorities import background_phone_waits
+    return key in PASSIVE or (key == PHONE_WAIT and background_phone_waits())
 _MISSING = object()
 
 
@@ -692,7 +701,7 @@ class Ladder:
             tier, value, work = price(goal)
         interrupt = INTERRUPT_FRAMES if self.running is not None and name != self.running else 0.0
         candidate = Candidate(f'{name}:{goal.key}', tier, value, work + self.travel(goal),
-                              passive=goal.key in PASSIVE, interrupt_frames=interrupt, goal=name)
+                              passive=passive_goal(goal.key), interrupt_frames=interrupt, goal=name)
         self.candidates.append(candidate)
         if candidate.passive:
             self.passive.append(goal)

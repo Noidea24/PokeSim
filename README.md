@@ -92,7 +92,9 @@ scale how often Red, Blue and Yellow wander, explore or stop to chat:
 | **Explorer** | new entries, filler, marathon, upgrades | about twice |
 
 The original already puts new entries first, so Collector differs from Balanced only a little.
-Gold, Silver and Crystal do not wander, so there only the order changes.
+Gold, Silver and Crystal do not wander. Outside Balanced, Crystal also waits for a trainer's call
+(such as Alan with a Fire Stone) while it keeps working, instead of standing by a Pokémon Center PC.
+The call reaches the player anywhere with phone service, and collecting the item still comes first.
 
 **Set it:** stop the adventure, open its settings, choose **Priorities (beta)**, save.<br>
 **Tested:** automated tests of the order and wandering for every choice.

@@ -74,7 +74,7 @@ def test_priorities_save_and_reload(page, tmp_path, monkeypatch):
         choice = page.locator('#settings-priorities')
         expect(choice).to_have_value('balanced')
         choice.select_option('trainer')
-        expect(page.locator('#settings-priorities-note')).to_contain_text('do not wander')
+        expect(page.locator('#settings-priorities-note')).to_contain_text('waits for a trainer to call')
         page.get_by_role('button', name='Save adventure settings', exact=True).click()
         expect(page.locator('#adventure-settings')).not_to_be_visible()
         assert captured['manager'].registry.adventure(captured['row']['id'])['settings']['priorities'] == 'trainer'
