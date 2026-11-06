@@ -46,7 +46,11 @@
       ? `<a href="/games/${trade.peer_id}/trading${completed || failed ? '#history' : ''}">${esc(trade.peer_name)}</a>` : esc(trade.peer_name)
     const pair = failed && !trade.sent && !trade.received ? ''
       : `<div class="swap cable-exchange">${pokemon(trade.sent, 'sent', completed, failed)}<span class="swap-arrow" aria-hidden="true">→</span>${pokemon(trade.received, 'received', completed, failed)}</div>`
-    const foot = time || completed ? `<footer class="deal-foot">${time}${completed ? '<span>Saved in both adventures</span>' : ''}</footer>` : ''
+    // Noidea24 fork: a trade still getting ready can be stopped. Nothing has been exchanged yet.
+    const stoppable = !completed && !failed && trade.cancellable && owner() && /^[a-f0-9]{32}$/.test(trade.id || '')
+    const foot = stoppable
+      ? `<footer class="deal-foot"><span>Nothing has been exchanged yet</span><button type="button" class="key active-cancel" data-cancel-active="${trade.id}">Cancel trade</button></footer>`
+      : time || completed ? `<footer class="deal-foot">${time}${completed ? '<span>Saved in both adventures</span>' : ''}</footer>` : ''
     const lamp = completed || failed ? '' : '<i class="lamp lamp--blink" data-on="signal" aria-hidden="true"></i>'
     return `<article class="deal trade-deal cable-card${failed ? ' cable-failed' : ''}${completed ? ' cable-completed' : ''}"><header class="deal-head"><h3>With ${peer}</h3><span class="tag ${tone} cable-status">${lamp}${esc(label)}</span></header>${pair}${reason}${foot}</article>`
   }
@@ -79,10 +83,31 @@
     }
     await refresh()
   }
+  // Noidea24 fork: stop a trade that is getting ready. Both adventures keep their Pokémon.
+  async function cancelActive(button) {
+    button.disabled = true
+    button.textContent = 'Cancelling…'
+    try {
+      const response = await PokeSim.api(`/api/v1/interactions/${button.dataset.cancelActive}/cancel`, {method: 'POST'})
+      if (!response.ok) {
+        let detail = ''
+        try { detail = (await response.json()).detail } catch (_) {}
+        throw new Error(typeof detail === 'string' && detail ? detail : 'This trade could not be cancelled.')
+      }
+      notice = 'Trade cancelled. Both adventures keep their Pokémon.'
+    } catch (error) {
+      $('#trade-connection-note').textContent = error.message
+      $('#trade-connection-note').hidden = false
+    }
+    await refresh()
+  }
   $('#trade-active')?.addEventListener?.('click', event => {
-    const button = event.target?.closest?.('[data-cancel]')
-    if (button && !button.disabled) cancelQueued(button)
+    const button = event.target?.closest?.('[data-cancel-active], [data-cancel]')
+    if (!button || button.disabled) return
+    if (button.dataset?.cancelActive) cancelActive(button)
+    else cancelQueued(button)
   })
+  let notice = ''
   const setLamp = state => { const lamp = $('#trade-lamp'); if (lamp?.dataset) lamp.dataset.on = state }
   let loading = false
   async function refresh() {
@@ -96,7 +121,9 @@
       $('#status').textContent = 'Connected'
       $('#connection').title = ''
       $('#connection').classList.toggle('is-offline', false)
-      $('#trade-connection-note').hidden = true
+      $('#trade-connection-note').textContent = notice
+      $('#trade-connection-note').hidden = !notice
+      notice = ''
       const running = data.adventure.state === 'running' && !data.adventure.archived
       const off = data.auto_enabled === false
       setLamp(data.active.length ? 'signal' : !running || off ? 'warn' : data.attention ? 'warn' : 'ok')

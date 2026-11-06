@@ -461,7 +461,10 @@ class Coordinator:
                     'updated_at': row['updated_at'], 'peer_id': peer, 'peer_name': names.get(peer, 'Another adventure'),
                     'sent': mon(detail['sent']), 'received': mon(detail['received']),
                     'failure_reason': self._failure_reason(row) if row['phase'] == 'aborted' else None,
-                    'recovering': bool(row['error']) or row['phase'] == 'recovering'}
+                    'recovering': bool(row['error']) or row['phase'] == 'recovering',
+                    # Noidea24 fork: the Trading page offers Cancel while nothing has been exchanged.
+                    'cancellable': row['decision'] != 'COMMIT' and row['phase'] not in TERMINAL
+                                   and row['phase'] not in ('aborting', 'recovering')}
         return {'adventure': {key: game[key] for key in ('id', 'name', 'version', 'state', 'archived')},
                 'active': [public(row) for row in self.registry.transactions(unresolved=True, adventure_id=aid)],
                 'queued': self._queued_for(aid, names),

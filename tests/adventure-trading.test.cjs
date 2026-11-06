@@ -209,3 +209,29 @@ test('a trade that has started, or a view link, offers no Cancel key', async () 
   for (const view of [owner, viewer]) assert.doesNotMatch(view.element('#trade-active').innerHTML, /data-cancel|Cancel trade/)
   assert.match(viewer.element('#trade-active').innerHTML, /Next for the Cable Club/)
 })
+
+// Noidea24 fork: a trade still getting ready offers Cancel, which stops it through the coordinator.
+test('a trade getting ready offers Cancel, and a committed or viewed one does not', async () => {
+  const tid = 'e'.repeat(32)
+  const trade = {id: tid, phase: 'preparing', decision: null, updated_at: 1, peer_id: 'b'.repeat(32), peer_name: 'Blue', cancellable: true}
+  let active = [trade]
+  const posted = []
+  const api = async (path, options) => {
+    posted.push([path, options.method])
+    active = []
+    return {ok: true, json: async () => ({})}
+  }
+  const view = page('red', () => ({adventure: {id: 'red', version: 'red', state: 'running'}, active, history: []}), {api})
+  await settle()
+  assert.match(view.element('#trade-active').innerHTML, new RegExp(`data-cancel-active="${tid}">Cancel trade</button>`))
+  const button = {dataset: {cancelActive: tid}, disabled: false, textContent: ''}
+  view.element('#trade-active').listeners.click({target: {closest: () => button}})
+  await settle()
+  assert.deepEqual(posted, [[`/api/v1/interactions/${tid}/cancel`, 'POST']])
+  assert.match(view.element('#trade-connection-note').textContent, /Trade cancelled/)
+  const committed = page('red', () => ({adventure: {id: 'red', state: 'running'}, history: [],
+    active: [{...trade, decision: 'COMMIT', phase: 'trading', cancellable: false}]}), {api})
+  const viewer = page('red', () => ({adventure: {id: 'red', state: 'running'}, history: [], active: [trade]}), {base: '/view/red'})
+  await settle()
+  for (const other of [committed, viewer]) assert.doesNotMatch(other.element('#trade-active').innerHTML, /data-cancel-active/)
+})

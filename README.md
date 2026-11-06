@@ -103,6 +103,8 @@ Gold, Silver and Crystal do not wander, so there only the order changes.
 - `TRADE_PREPARE_SECONDS` limits how long two games may walk to the Cable Club before a trade is
   called off, scaled by game speed. See [Trade preparation limit](docs/operations.md#trade-preparation-limit).
 - The TV view reconnects by itself after trades, and quiet live streams close without an error.
+- A **Cancel trade** button on a trade in progress (each game's Trading tab), shown while nothing
+  has been exchanged yet.
 
 ## Running the fork
 

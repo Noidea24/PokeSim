@@ -1027,3 +1027,14 @@ def test_trade_views_build_only_the_rows_they_return(setup):
     mine = c.adventure_status(left)
     assert len(mine['history']) == 20 and len(mine['recent_failures']) == 5 and mine['active'] == []
     assert len(built) <= 25
+
+
+def test_active_trade_says_whether_the_owner_may_cancel_it(setup):
+    """Noidea24 fork: the Trading page offers Cancel only while nothing has been exchanged."""
+    left, _ = trade_display_fixture(setup)
+    row = setup.coordinator.propose(setup.data)
+    assert setup.coordinator.adventure_status(left)['active'][0]['cancellable'] is True
+    setup.registry.update_transaction(row['id'], phase='aborting')
+    assert setup.coordinator.adventure_status(left)['active'][0]['cancellable'] is False
+    setup.registry.update_transaction(row['id'], decision='COMMIT', phase='trading')
+    assert setup.coordinator.adventure_status(left)['active'][0]['cancellable'] is False
