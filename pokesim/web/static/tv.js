@@ -16,7 +16,7 @@
   const flag = (name) => params.get(name)
   const only = (flag('ids') || '').split(',').map((s) => s.trim()).filter(Boolean)
   const showAll = flag('all') === '1'
-  const live = flag('stream') !== '0' && 'ReadableStream' in window && 'createImageBitmap' in window
+  const live = flag('stream') !== '0' && 'ReadableStream' in window
   const fps = live ? Math.min(60, Math.max(1, Math.round(Number(flag('fps')) || 0))) || 0
     : Math.min(10, Math.max(0.2, Number(flag('fps')) || 2))
   const ACTIVE = new Set(['running', 'paused', 'manual', 'trading'])
@@ -60,11 +60,10 @@
     const tile = el('a', 'tv-tile')
     tile.href = gameBase(adventure.id)
     const screen = el('div', 'tv-screen')
-    const img = el('canvas')
+    const img = el('img')
     img.width = 160
     img.height = 144
-    img.setAttribute('role', 'img')
-    img.setAttribute('aria-label', `${adventure.name} game screen`)
+    img.alt = `${adventure.name} game screen`
     const state = el('span', 'tv-state')
     state.hidden = true
     screen.append(img, state)
@@ -107,26 +106,25 @@
     view.active = ACTIVE.has(a.state)
   }
 
-  // Draw one PNG frame into a tile. If frames arrive faster than they decode, keep only the newest.
+  // Show one PNG frame in a tile, the same way the game page does: decode it off screen as an
+  // object URL, then swap it in. If frames arrive faster than they decode, keep only the newest.
   function show(view, blob) {
     if (view.drawing) { view.pending = blob; return }
     view.drawing = true
-    createImageBitmap(blob).then((bitmap) => {
-      const canvas = view.img
-      if (canvas.width !== bitmap.width || canvas.height !== bitmap.height) {
-        canvas.width = bitmap.width
-        canvas.height = bitmap.height
-      }
-      const ctx = canvas.getContext('2d')
-      ctx.imageSmoothingEnabled = false
-      ctx.drawImage(bitmap, 0, 0)
-      bitmap.close?.()
-      canvas.classList.add('ready')
-    }).catch(() => {}).finally(() => {
+    const url = URL.createObjectURL(blob)
+    const next = new Image()
+    next.src = url
+    next.decode().then(() => {
+      const previous = view.url
+      view.img.src = url
+      view.url = url
+      view.img.classList.add('ready')
+      if (previous) URL.revokeObjectURL(previous)
+    }).catch(() => URL.revokeObjectURL(url)).finally(() => {
       view.drawing = false
-      const next = view.pending
+      const queued = view.pending
       view.pending = null
-      if (next) show(view, next)
+      if (queued) show(view, queued)
     })
   }
 

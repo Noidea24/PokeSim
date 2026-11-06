@@ -54,7 +54,7 @@ def test_tv_grid_fits_the_screen(page, tmp_path, monkeypatch, width, height):
         page.set_viewport_size({'width': width, 'height': height})
         page.goto(url + '/tv?stream=0')
         expect(page.locator('.tv-tile')).to_have_count(3)
-        expect(page.locator('.tv-screen canvas.ready')).to_have_count(3)
+        expect(page.locator('.tv-screen img.ready')).to_have_count(3)
         expect(page.locator('#tv-totals')).to_contain_text('3 running')
         expect(page.locator('.tv-tile').nth(1).locator('.tv-state')).to_have_text('PAUSED')
         assert page.evaluate('document.documentElement.scrollWidth <= innerWidth')
@@ -87,13 +87,16 @@ def test_six_live_games_share_one_connection_and_sprites_still_load(page, tmp_pa
         page.set_viewport_size({'width': 1280, 'height': 900})
         page.goto(url + '/tv?fps=30')
         expect(page.locator('.tv-tile')).to_have_count(6)
-        expect(page.locator('.tv-screen canvas.ready')).to_have_count(6)
+        expect(page.locator('.tv-screen img.ready')).to_have_count(6)
         page.wait_for_function("[...document.querySelectorAll('.tv-party img')].length === 6 && "
                                "[...document.querySelectorAll('.tv-party img')].every(i => i.complete && i.naturalWidth > 0)")
         from urllib.parse import parse_qs, urlsplit
         query = parse_qs(urlsplit(requests[0]).query)
         assert len(requests) == 1 and set(query['ids'][0].split(',')) == set(GAMES) and query['fps'] == ['30']
-        drawn = page.evaluate("""() => [...document.querySelectorAll('.tv-screen canvas')].map(c =>
-            [...c.getContext('2d').getImageData(80, 72, 1, 1).data].slice(0, 3).join(','))""")
+        drawn = page.evaluate("""() => [...document.querySelectorAll('.tv-screen img')].map(img => {
+            const c = document.createElement('canvas'); c.width = 160; c.height = 144
+            const ctx = c.getContext('2d'); ctx.drawImage(img, 0, 0)
+            return [...ctx.getImageData(80, 72, 1, 1).data].slice(0, 3).join(',')
+        })""")
         order = page.evaluate("[...document.querySelectorAll('.tv-tile')].map(t => new URL(t.href).pathname.split('/')[2])")
         assert {aid: drawn[i] for i, aid in enumerate(order)} == {aid: f'{30 * i},120,60' for i, aid in enumerate(GAMES)}
