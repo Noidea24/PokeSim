@@ -166,3 +166,54 @@ def test_library_route_merges_live_worker_streams(tmp_path, monkeypatch):
             server.should_exit = True
     last = {aid: data for aid, data in frames}
     assert last == {'red': b'\x89PNG-red-2', 'gold': b'\x89PNG-gold-2'}
+
+
+def test_a_quiet_live_stream_ends_without_an_error(tmp_path, monkeypatch, caplog):
+    """A paused or trading game sends no frames. The viewer's stream closes, logged as info."""
+    AID = 'ab' * 16
+    import json
+    import logging
+    import socket
+    import threading
+    import time
+    import uvicorn
+    from fastapi import FastAPI
+    from fastapi.responses import StreamingResponse
+    from fastapi.testclient import TestClient
+    from pokesim.app.manager import Manager, create_app
+
+    app = FastAPI()
+
+    @app.get('/stream')
+    async def stream():
+        async def gen():
+            yield part(b'\x89PNG-one')
+            await asyncio.sleep(30)
+        return StreamingResponse(gen(), media_type='multipart/x-mixed-replace; boundary=pokesimframe')
+    sock = socket.socket()
+    sock.bind(('127.0.0.1', 0))
+    port = sock.getsockname()[1]
+    sock.close()
+    server = uvicorn.Server(uvicorn.Config(app, host='127.0.0.1', port=port, log_level='warning'))
+    threading.Thread(target=server.run, daemon=True).start()
+    while not server.started:
+        time.sleep(0.05)
+    manager = Manager(tmp_path, 'http://testserver')
+    monkeypatch.setattr(manager, 'start', lambda: None)
+    monkeypatch.setattr(manager.supervisor, 'child', lambda aid: SimpleNamespace(url=f'http://127.0.0.1:{port}', token='t'))
+    with manager.registry.db:
+        manager.registry.db.execute(
+            'INSERT INTO adventures (id, campaign_id, name, rom_id, version, settings, desired_state, state, '
+            'generation, summary, created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?)',
+            (AID, AID, 'Red', 'rom', 'red', '{}', 'running', 'running', 'g', json.dumps({}), 0))
+    try:
+        web = create_app(manager)
+        with TestClient(web) as client:
+            web.state.children = httpx.AsyncClient(timeout=httpx.Timeout(5, read=0.5))
+            with caplog.at_level(logging.INFO, logger='pokesim.app.manager'):
+                response = client.get(f'/games/{AID}/stream')
+            assert response.status_code == 200 and b'\x89PNG-one' in response.content, response.text[:300]
+    finally:
+        server.should_exit = True
+    assert 'went quiet' in caplog.text
+    assert not [r for r in caplog.records if r.levelno >= logging.ERROR]

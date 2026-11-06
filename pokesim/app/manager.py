@@ -1052,6 +1052,12 @@ def create_app(manager, shutdown=lambda: None):
             try:
                 async for chunk in response.aiter_bytes():
                     yield chunk
+            except httpx.ReadTimeout:
+                # A live picture goes quiet while its game is paused or trading. That ends this
+                # viewer's stream, which is expected, so it is not logged as an error.
+                if path != 'stream':
+                    raise
+                log.info('Live stream for %s went quiet and was closed', aid)
             finally:
                 await response.aclose()
         safe_headers = {key: value for key, value in response.headers.items()
