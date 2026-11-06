@@ -100,3 +100,21 @@ def test_six_live_games_share_one_connection_and_sprites_still_load(page, tmp_pa
         })""")
         order = page.evaluate("[...document.querySelectorAll('.tv-tile')].map(t => new URL(t.href).pathname.split('/')[2])")
         assert {aid: drawn[i] for i, aid in enumerate(order)} == {aid: f'{30 * i},120,60' for i, aid in enumerate(GAMES)}
+
+
+def test_without_fps_the_feed_leaves_the_rate_to_the_server(page, tmp_path, monkeypatch):
+    """No ?fps= must not ask the server for a rate at all (it once asked for 1)."""
+    def factory(url):
+        manager = Manager(tmp_path / 'library', url)
+        monkeypatch.setattr(manager, 'start', lambda: None)
+        add(manager, 'red', 'red', 1)
+        return create_app(manager)
+    requests = []
+    with serve(factory) as url:
+        page.route('**/api/v1/tv/stream*', lambda route: (requests.append(route.request.url),
+                   route.fulfill(body=feed(['red']), content_type='application/x-pokesim-frames')))
+        page.route('**/sprites/**', lambda route: route.fulfill(path=str(FRAME), content_type='image/svg+xml'))
+        from playwright.sync_api import expect
+        page.goto(url + '/tv')
+        expect(page.locator('.tv-screen img.ready')).to_have_count(1)
+        assert requests and 'fps=' not in requests[0]

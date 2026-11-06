@@ -17,8 +17,10 @@
   const only = (flag('ids') || '').split(',').map((s) => s.trim()).filter(Boolean)
   const showAll = flag('all') === '1'
   const live = flag('stream') !== '0' && 'ReadableStream' in window
-  const fps = live ? Math.min(60, Math.max(1, Math.round(Number(flag('fps')) || 0))) || 0
-    : Math.min(10, Math.max(0.2, Number(flag('fps')) || 2))
+  // Live with no ?fps= leaves the rate to the server's STREAM_FPS (0 here means "not set").
+  const asked = Number(flag('fps')) || 0
+  const fps = live ? (asked ? Math.min(60, Math.max(1, Math.round(asked))) : 0)
+    : Math.min(10, Math.max(0.2, asked || 2))
   const ACTIVE = new Set(['running', 'paused', 'manual', 'trading'])
   const STATE_LABEL = { paused: 'PAUSED', manual: 'MANUAL', trading: 'TRADING', stopped: 'STOPPED', failed: 'FAILED' }
   const SPRITES = 'rom-portraits-1'

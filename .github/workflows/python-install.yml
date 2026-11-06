@@ -1,15 +1,8 @@
 name: Python install
 on:
-  # Branches are tested through their pull request, so a push runs only on main and tags. The release gate
-  # needs those push runs as evidence for the exact commit it publishes.
-  push:
-    branches: [main]
-    tags: ['**']
-  pull_request:
-    # Documentation-only pull requests do not change what installs. Pushes to main and tags always run everything.
-    paths-ignore:
-      - 'docs/**'
-      - '**/*.md'
+  # Noidea24 fork: run by hand only. This tests the Windows, macOS and Linux desktop installers,
+  # which the fork's server image does not use, and it took about ten minutes on every push.
+  # Upstream runs it on pushes to main, tags and pull requests.
   workflow_dispatch:
 permissions:
   contents: read
