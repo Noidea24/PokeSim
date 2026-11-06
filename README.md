@@ -1,7 +1,7 @@
 <h1 align="center">PokeSim · Noidea24 fork</h1>
 
 <p align="center">
-  A fork of <a href="https://github.com/afk-sapien/PokeSim"><b>afk-sapien/PokeSim</b></a> with three optional features.<br>
+  A fork of <a href="https://github.com/afk-sapien/PokeSim"><b>afk-sapien/PokeSim</b></a> with a few optional features.<br>
   All credit for PokeSim itself goes to its author. <a href="#original-readme">Jump to the original README ↓</a>
 </p>
 
@@ -57,6 +57,25 @@ so reading them costs nothing, and a stopped game keeps its last numbers.
 **Read it:** `/api/v1/stats` for everything, `/api/v1/stats/<adventure id>` for one game. A
 [Homepage card example](docs/operations.md#dashboard-stats) is in the docs.<br>
 **Tested:** live games and automated tests.
+
+### 4. Battle style (beta)
+
+Before each gym leader and the League, the original trains until its best matchup scores 75 or the
+team is 10 levels above the gym. In Yellow's late game that can mean hours on a route whose wild
+Pokémon barely give experience. A battle style changes how cautious that is, per adventure:
+
+| Style | Readiness wanted | Levels above the gym | Tries anyway after |
+| --- | --- | --- | --- |
+| **Balanced** (default) | 75 | 10 | never, as in the original |
+| **Bold** | 55 | 5 | 30 game minutes of training |
+| **Careful** | 85 | 15 | never |
+| **Custom** | your number | your number | your number |
+
+With a limit set, training and challenging take turns in stretches of that length until the badge
+is won. Gold, Silver and Crystal only train before Falkner, so there it mostly changes that.
+
+**Set it:** stop the adventure, open its settings, choose **Battle style (beta)**, save.<br>
+**Tested:** automated tests of every gate, including a Sabrina case like a stalled Yellow run.
 
 ### Smaller fixes and settings
 

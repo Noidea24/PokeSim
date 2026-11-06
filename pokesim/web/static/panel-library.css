@@ -519,6 +519,8 @@
   border-bottom: var(--hair) solid var(--rule);
 }
 .sheet-body { display: grid; gap: var(--s4); padding: var(--s4); }
+/* Noidea24 fork: the custom battle style numbers keep the dialog's spacing. */
+#settings-profile-custom:not([hidden]) { display: grid; gap: var(--s4); }
 .sheet-foot {
   position: sticky;
   bottom: 0;

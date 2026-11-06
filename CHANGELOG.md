@@ -4,6 +4,8 @@
 
 These fork additions are beta: they pass the automated tests and have run on live Red and Crystal games, but have had little long-run use so far.
 
+- Add **Battle style (beta)** to adventure settings: Balanced (the original), Bold, Careful or Custom. It sets the readiness score and level margin the bot wants before each gym leader and the League, and an optional training patience after which training and challenging alternate, so a team that cannot gain from its training route still tries the leader. Gold, Silver and Crystal only train before Falkner, so there it mostly changes that level. Balanced is stored as absent, so adventures open in releases without the setting.
+
 - Add `TRADE_PREPARE_SECONDS`, the time two games get to reach the Cable Club before a trade is called off, in game time at 1x speed. Each limit is divided by game speed (the slower game sets the Library's), never under a minute, and unlimited speed counts as 16x. It sets both the Library's limit and each game's own walking deadline, so a game no longer keeps walking after the Library gave up. Unset, the original 15 and 30 minute limits apply.
 
 - `STREAM_FPS` now reaches the games too. Upstream, each game read its own `stream_fps` adventure setting, which defaults to 15 and has no field in the Library, so the environment variable changed only the Library. A game with no `stream_fps` of its own now follows `STREAM_FPS`. Unset, everything stays at 15 as before.

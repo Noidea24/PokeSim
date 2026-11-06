@@ -239,7 +239,8 @@ def _readiness(s, bit):
     healing = sum(qty for item, qty in s.items if item in HEALING)
     revives = dict(s.items).get(ITEMS['REVIVE'], 0)
     concerns = []
-    if not best or best['score'] < 75:
+    from ..caution import caution
+    if not best or best['score'] < caution():
         concerns.append('The strongest matchup still needs preparation')
     if any(p.status or not p.hp for p in s.party):
         concerns.append('Heal fainted partners or status conditions')

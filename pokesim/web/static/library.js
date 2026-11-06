@@ -885,6 +885,13 @@
         input.closest('label').hidden = johto
         input.disabled = johto || running(game)
       }
+      const profile = game.settings?.battle_profile || 'balanced'
+      $('#settings-battle-profile').value = profile
+      $('#settings-gym-caution').value = game.settings?.gym_caution ?? 75
+      $('#settings-level-margin').value = game.settings?.level_margin ?? 10
+      $('#settings-training-patience').value = game.settings?.training_patience ?? 0
+      for (const id of ['battle-profile', 'gym-caution', 'level-margin', 'training-patience']) $(`#settings-${id}`).disabled = running(game)
+      showProfile(johto)
       $('#settings-event-steps-label').textContent = johto ? 'Steps between gift, trade, Sudowoodo and Snorlax returns' : 'Steps between gift, trade and Snorlax returns'
       $('#adventure-settings').showModal()
       return
@@ -921,11 +928,33 @@
       if (startNow) await write(`/api/v1/adventures/${encodeURIComponent(game.id)}/start`)
       notice('Adventure created. Its status will update as it gets ready.')
     }) }
+  // Noidea24 fork (beta): battle style. Balanced is the original; the note says what each one changes.
+  const PROFILE_NOTES = {
+    balanced: 'The original: trains before each leader until its best matchup is ready or the team is 10 levels above the gym.',
+    bold: 'Challenges sooner: a lower readiness bar, 5 levels above the gym, and after 30 game minutes of training it tries the leader anyway.',
+    careful: 'Trains longer: a higher readiness bar and 15 levels above the gym before each leader.',
+    custom: 'Your own numbers. Training and trying alternate in stretches of the patience you set.',
+  }
+  function showProfile(johto) {
+    const profile = $('#settings-battle-profile').value
+    $('#settings-profile-custom').hidden = profile !== 'custom'
+    $('#settings-profile-note').textContent = PROFILE_NOTES[profile] +
+      (johto ? ' Gold, Silver and Crystal only train before Falkner, so here it mostly changes that.' : '')
+  }
+  $('#settings-battle-profile').onchange = () => {
+    const game = adventures.find(item => item.id === $('#settings-id').value)
+    showProfile(['gold', 'silver', 'crystal'].includes(game?.version))
+  }
   $('#adventure-settings-form').onsubmit = event => { event.preventDefault()
     act(async () => {
       const game = adventures.find(item => item.id === $('#settings-id').value)
       const rewards = game && !running(game) ? {league_rewards: $('#settings-league-rewards').checked, mew_event: $('#settings-mew-event').checked, celebi_event: $('#settings-celebi-event').checked, extra_store_items: $('#settings-extra-store-items').checked, legendary_return_steps: Number($('#settings-legendary-steps').value), event_return_steps: Number($('#settings-event-steps').value), mew_return_steps: Number($('#settings-mew-steps').value), fossil_preference: $('#settings-fossil-preference').value, dojo_preference: $('#settings-dojo-preference').value} : {}
       if (game && !['gold', 'silver', 'crystal'].includes(game.version)) rewards.fair_wild_dvs = $('#settings-fair-wild-dvs').checked
+      if (game && !running(game)) {
+        rewards.battle_profile = $('#settings-battle-profile').value
+        if (rewards.battle_profile === 'custom') Object.assign(rewards, {gym_caution: Number($('#settings-gym-caution').value),
+          level_margin: Number($('#settings-level-margin').value), training_patience: Number($('#settings-training-patience').value)})
+      }
       if (['gold', 'silver', 'crystal'].includes(game?.version)) {
         for (const field of ['fossil_preference', 'dojo_preference']) delete rewards[field]
       }

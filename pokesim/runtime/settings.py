@@ -45,6 +45,10 @@ class SimulationSettings:
     mew_return_steps: int = 1000000
     fossil_preference: str = 'auto'
     dojo_preference: str = 'auto'
+    battle_profile: str = 'balanced'
+    gym_caution: int = 75
+    level_margin: int = 10
+    training_patience: int = 0
     seed: int | None = None
     fast_text: bool = True
     battle_animations: bool = True
@@ -96,7 +100,11 @@ class SimulationSettings:
                               'dojo_preference': {'auto', 'hitmonlee', 'hitmonchan'}}.items():
             if not isinstance(getattr(self, name), str) or getattr(self, name) not in choices:
                 raise ValueError(f'Unknown {name}')
+        from ..caution import CHOICES as PROFILE_CHOICES, LIMITS as PROFILE_LIMITS
+        if self.battle_profile not in PROFILE_CHOICES:
+            raise ValueError('Unknown battle_profile')
         ranges = {
+            **PROFILE_LIMITS,
             'speed': (0, 16), 'autosave_seconds': (1, 86400),
             'keep_autosaves': (1, 10000), 'stuck_reload_seconds': (1, 604800),
             'battle_timeout_seconds': (1, 604800), 'stream_fps': (1, 60),

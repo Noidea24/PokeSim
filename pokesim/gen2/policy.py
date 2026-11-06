@@ -333,9 +333,12 @@ class Policy:
             return Goal('deliver_egg', 'Bring the mystery egg to Elm', 'ELMS_LAB', 5, 3, 'up')
         self.completed.setdefault('deliver_egg', snapshot.frame)
         if not snapshot.badges & 1:
-            if max((mon.level for mon in snapshot.party if not mon.egg), default=0) < 12:
+            from ..caution import keep_training, margin
+            target = 2 + margin()       # the original's level 12 at Balanced
+            if (max((mon.level for mon in snapshot.party if not mon.egg), default=0) < target
+                    and keep_training('train_falkner', snapshot.frame)):
                 from .training import walk_goal
-                return walk_goal(self, snapshot, Goal, lambda: 'Train the team to level 12 before Falkner',
+                return walk_goal(self, snapshot, Goal, lambda: f'Train the team to level {target} before Falkner',
                                  map_name='ROUTE_31')
             return Goal('zephyr', 'Challenge Falkner', 'VIOLET_GYM', 5, 2, 'up')
         self.completed.setdefault('zephyr', snapshot.frame)

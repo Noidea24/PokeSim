@@ -9,6 +9,7 @@ from .team import readiness
 
 from ..game_data import current_variant
 from ..strategy_data import ITEMS, MAPS, SPECIES, WORLD, event_set, object_hidden
+from ..caution import caution, keep_training, margin
 
 
 @dataclass(frozen=True)
@@ -97,7 +98,8 @@ def story_goal(snapshot, starter="bulbasaur", fossil="HELIX_FOSSIL"):
             return at("pokedex", "Deliver Oak’s parcel", "Obtain the Pokédex and open the northward route", "OAKS_LAB", 5, 3, "up")
         return at("parcel", "Collect Oak’s parcel", "The Viridian clerk has a delivery for Oak", "VIRIDIAN_MART", 2, 5, "left")
     if not snapshot.badges & 1:
-        if readiness(snapshot, 1)['score'] < 75 and max(p.level for p in snapshot.party) < 22:
+        if (readiness(snapshot, 1)['score'] < caution() and max(p.level for p in snapshot.party) < 12 + margin()
+                and keep_training('train_brock', snapshot.frame)):
             grass = []
             for name in ("ROUTE_2", "VIRIDIAN_FOREST"):
                 m = MAPS[name]
@@ -152,7 +154,8 @@ def training_goal(key, title, reason, map_name):
 def gym_goal(s, bit):
     _, key, trainer, gym, obj, level, route = next(g for g in GYMS if g[0] == bit)
     assessment = readiness(s, bit)
-    if assessment['score'] < 75 and max(p.level for p in s.party) < level + 10 and s.map != MAPS[gym]:
+    if (assessment['score'] < caution() and max(p.level for p in s.party) < level + margin() and s.map != MAPS[gym]
+            and keep_training('train_' + key, s.frame)):
         return training_goal(key, f"Prepare for {trainer}",
                              f"Build usable damage and survival against {trainer}, then reassess the team", route)
     if key == "volcano":
@@ -312,10 +315,12 @@ def campaign_goal(s, fossil="HELIX_FOSSIL"):
     if s.map not in league_maps:
         assessments = [readiness(s, bit) for bit in range(256, 261)]
         partner = league_partner(s)
-        if partner is not None and s.party[partner].level < 55 and any(a['score'] < 75 for a in assessments):
+        if (partner is not None and s.party[partner].level < 45 + margin() and any(a['score'] < caution() for a in assessments)
+                and keep_training('train_league_partner', s.frame)):
             return training_goal('league_partner', 'Prepare a second League battler',
                                  'Build coverage for the League matchups that remain difficult', 'POKEMON_MANSION_1F')
-        if max(p.level for p in s.party) < 65 and any(a['score'] < 60 for a in assessments):
+        if (max(p.level for p in s.party) < 55 + margin() and any(a['score'] < caution() - 15 for a in assessments)
+                and keep_training('train_league', s.frame)):
             return training_goal('league', 'Prepare for the Pokémon League',
                                  'Improve damage and survival across the final matchups', 'ROUTE_23')
         if s.map != MAPS['INDIGO_PLATEAU_LOBBY']:

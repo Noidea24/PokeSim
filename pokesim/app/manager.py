@@ -102,7 +102,8 @@ class Manager:
         allowed = {'trainer_name', 'rival_name', 'speed', 'starter', 'policy', 'auto_start', 'seed', 'fast_text', 'battle_animations',
                    'autosave_seconds', 'keep_autosaves', 'stream_fps', 'viewer_only', 'league_rewards',
                    'mew_event', 'celebi_event', 'extra_store_items', 'fair_wild_dvs', 'legendary_return_steps', 'event_return_steps', 'mew_return_steps',
-                   'fossil_preference', 'dojo_preference', 'event_retention_days', 'palette', 'randomizer'}
+                   'fossil_preference', 'dojo_preference', 'event_retention_days', 'palette', 'randomizer',
+                   'battle_profile', 'gym_caution', 'level_margin', 'training_patience'}
         if not isinstance(values, dict) or not set(values) <= allowed:
             raise ValueError('Unsupported adventure settings')
         result = {'starter': 'random', 'policy': 'strategic', 'auto_start': False, **values}
@@ -145,7 +146,8 @@ class Manager:
                 raise ValueError(f'Unknown {name}')
         if result.get('seed') is not None and type(result['seed']) is not int:
             raise ValueError('Seed must be an integer')
-        return result
+        from ..caution import validate as validate_profile
+        return validate_profile(result)
 
     def start_adventure(self, aid):
         try:
@@ -521,6 +523,8 @@ def create_app(manager, shutdown=lambda: None):
             'mew_return_steps': data.get('mew_return_steps', 1000000),
             'fossil_preference': data.get('fossil_preference', 'auto'),
             'dojo_preference': data.get('dojo_preference', 'auto'),
+            **{name: data[name] for name in ('battle_profile', 'gym_caution', 'level_margin', 'training_patience')
+               if name in data},
         })
         return manager.registry.create(data.get('name', ''), data.get('rom_id', ''), settings,
                                        data.get('request_id', identifier()))
