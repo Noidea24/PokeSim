@@ -49,6 +49,9 @@ STALL_ALERT_REPEAT_HOURS = int(_env("STALL_ALERT_REPEAT_HOURS", "6"))
 # Each stall keeps the moment it was noticed and the save from before it began. 0 = keep none.
 KEEP_STALL_BUNDLES = int(_env("KEEP_STALL_BUNDLES", "5"))
 STREAM_FPS = int(_env("STREAM_FPS", "15"))
+# Noidea24 fork: seconds two games get to reach the Cable Club before a trade is called off.
+# 0 keeps the original's timers: 15 minutes in the Library and 30 minutes in each game.
+TRADE_PREPARE_SECONDS = int(_env("TRADE_PREPARE_SECONDS", "0"))
 FEED_TITLE = _env("FEED_TITLE", "pokesim")
 
 HOST = _env("HOST", "127.0.0.1")
@@ -76,6 +79,7 @@ def validate():
         "STALL_ALERT_REPEAT_HOURS": (STALL_ALERT_REPEAT_HOURS, 1, 8760),
         "KEEP_STALL_BUNDLES": (KEEP_STALL_BUNDLES, 0, 1000),
         "STREAM_FPS": (STREAM_FPS, 1, 60),
+        "TRADE_PREPARE_SECONDS": (TRADE_PREPARE_SECONDS, 0, 86400),
         "NTFY_MIN_PRIORITY": (NTFY_MIN_PRIORITY, 1, 5),
         "EVENT_RETENTION_DAYS": (EVENT_RETENTION_DAYS, 0, 36500),
         "EVENT_ATTACHMENT_KEEP": (EVENT_ATTACHMENT_KEEP, 0, 10000000),

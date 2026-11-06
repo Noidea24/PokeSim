@@ -200,6 +200,16 @@ It is a compact overview, not the full journal or a raw diagnostic log. Every
 managed simulation page links back to the Library through the PokeSim logo.
 The adventure selector switches between games without returning to the Library.
 
+## Trade preparation limit
+
+Before an automatic trade, both games walk to a Pokémon Center's Cable Club. The original gives
+up after 15 real minutes in the Library and 30 in each game, whatever the game speed, so a game at
+8x that cannot find its way paces for a long time. Set `TRADE_PREPARE_SECONDS` to the game time
+that walk may take at 1x. Each game gets that divided by its speed, the Library uses the slower
+game's, an unlimited-speed game counts as 16x and no limit drops under a minute. For example, 600
+gives 10 minutes at 1x, 2 minutes 30 seconds at 4x and 1 minute at 16x. A trade that runs out of
+time is called off safely and both games carry on with their own Pokémon.
+
 ## Dashboard stats
 
 `GET /api/v1/stats` returns read-only numbers for a home dashboard such as Homepage,

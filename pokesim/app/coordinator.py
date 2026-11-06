@@ -627,7 +627,7 @@ class Coordinator:
         return None
 
     def _prepare(self, row):
-        deadline = time.monotonic() + self.prepare_timeout
+        deadline = time.monotonic() + self._prepare_seconds(row)
         prepared = {}
         plan = row['plan']
         # A full PC releases one spare to make room, never a hand-picked Pokémon.
@@ -672,6 +672,13 @@ class Coordinator:
                 raise TimeoutError('The adventures did not reach a safe Cable Club rendezvous in time' + tag)
             self.closed.wait(self.prepare_poll)
         return prepared
+
+    def _prepare_seconds(self, row):
+        """Noidea24 fork: TRADE_PREPARE_SECONDS, scaled by the slower game's speed, or the original limit."""
+        from .. import config
+        from ..trade.timing import scaled_seconds
+        speeds = [self.registry.adventure(aid)['settings'].get('speed', 1) for aid in row['plan']['participants']]
+        return scaled_seconds(config.TRADE_PREPARE_SECONDS, speeds, self.prepare_timeout)
 
     def _session_plan(self, row, prepared):
         from ..interactions.link_worker import CableParticipant, CableSessionPlan

@@ -58,6 +58,13 @@ so reading them costs nothing, and a stopped game keeps its last numbers.
 [Homepage card example](docs/operations.md#dashboard-stats) is in the docs.<br>
 **Tested:** live games and automated tests.
 
+### Smaller fixes and settings
+
+- `STREAM_FPS` (up to 60) now sets every game's live picture rate, not only the Library's.
+- `TRADE_PREPARE_SECONDS` limits how long two games may walk to the Cable Club before a trade is
+  called off, scaled by game speed. See [Trade preparation limit](docs/operations.md#trade-preparation-limit).
+- The TV view reconnects by itself after trades, and quiet live streams close without an error.
+
 ## Running the fork
 
 Use `ghcr.io/noidea24/pokesim:latest` in place of `ghcr.io/afk-sapien/pokesim`. Every push to `main`

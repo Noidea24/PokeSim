@@ -19,6 +19,17 @@ from pokecore.identity import dex_of, is_legacy, legacy, same
 from ..trade.preferences import identity
 from ..web.pokedex import live_status
 
+
+def travel_seconds(emu):
+    """How long this game may walk to the Cable Club before giving up.
+
+    Noidea24 fork: TRADE_PREPARE_SECONDS is game time at 1x speed, so a faster game gets
+    proportionally less real time, never under a minute. Unset, the original 30 minutes apply.
+    """
+    from .. import config
+    from ..trade.timing import scaled_seconds
+    return scaled_seconds(config.TRADE_PREPARE_SECONDS, [getattr(emu, 'speed', 1)], 1800)
+
 KEY = 'interaction_preparation'
 ACTIVE = {'travelling', 'storage', 'rendezvous'}
 CENTER = 89
@@ -84,7 +95,7 @@ def begin(emu, trade_key, transaction_id, max_frames=108000, manual=False, prote
     if type(max_frames) is not int or not 60 <= max_frames <= 216000:
         raise ValueError('Invalid preparation frame budget')
     state = {'id': transaction_id, 'trade_key': trade_key, 'phase': 'travelling',
-             'started_at': time.time(), 'deadline': time.time() + 1800,
+             'started_at': time.time(), 'deadline': time.time() + travel_seconds(emu),
              'elapsed_frames': 0, 'max_frames': max_frames, 'party_slot': None, 'selected_key': trade_key,
              # Hand-picked Pokémon and wished species the PC must keep if it has to release one to make room.
              'protect': sorted(set(protect)), 'wished': sorted(set(wished))}

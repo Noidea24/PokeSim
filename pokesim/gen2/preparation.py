@@ -10,6 +10,17 @@ from .policy import Action
 from pokecore.gen2.ram import Memory, read_snapshot
 from .world import update as update_world
 
+
+def travel_seconds(emu):
+    """How long this game may walk to the Cable Club before giving up.
+
+    Noidea24 fork: TRADE_PREPARE_SECONDS is game time at 1x speed, so a faster game gets
+    proportionally less real time, never under a minute. Unset, the original 30 minutes apply.
+    """
+    from .. import config
+    from ..trade.timing import scaled_seconds
+    return scaled_seconds(config.TRADE_PREPARE_SECONDS, [getattr(emu, 'speed', 1)], 1800)
+
 KEY = 'interaction_preparation'
 FULL = 'Every PC box is full and no spare duplicate can be safely released to make room for this trade'
 
@@ -65,7 +76,7 @@ def begin(emu, key, tid, *, time_capsule=False, manual=False, session=False, pro
         if not compatible(selected(snapshot, preferences, key)[2], emu.data):
             raise ValueError('The selected Pokémon cannot enter the Time Capsule')
     state = {'id': tid, 'trade_key': key, 'phase': 'travelling', 'started_frame': emu.frame,
-             'deadline': time.time() + 1800, 'party_slot': None, 'time_capsule': time_capsule}
+             'deadline': time.time() + travel_seconds(emu), 'party_slot': None, 'time_capsule': time_capsule}
     if manual:
         state['manual'] = True
     if session:
