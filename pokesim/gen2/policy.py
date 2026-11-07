@@ -547,6 +547,11 @@ class Policy:
         if partner:
             return partner
         if not snapshot.hall_of_fame_count:
+            # Noidea24 fork: raise a second battler and the starter before each League attempt.
+            from .league_prep import goal as league_training
+            training = league_training(self, snapshot, mem, Goal)
+            if training:
+                return training
             rooms = [('WILL', 'WILLS_ROOM', 'WillScript_Battle'), ('KOGA', 'KOGAS_ROOM', 'KogaScript_Battle'),
                      ('BRUNO', 'BRUNOS_ROOM', 'BrunoScript_Battle'), ('KAREN', 'KARENS_ROOM', 'KarenScript_Battle')]
             for name, room, script in rooms:

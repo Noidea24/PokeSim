@@ -942,7 +942,7 @@
     const profile = $('#settings-battle-profile').value
     $('#settings-profile-custom').hidden = profile !== 'custom'
     $('#settings-profile-note').textContent = PROFILE_NOTES[profile] +
-      (johto ? ' Gold, Silver and Crystal only train before Falkner, so here it mostly changes that.' : '')
+      (johto ? ' Gold, Silver and Crystal train before Falkner and the Elite Four, so here it sets those levels.' : '')
   }
   // Noidea24 fork (beta): what it prefers after the story. Story, healing and supplies always come first.
   const PRIORITY_NOTES = {

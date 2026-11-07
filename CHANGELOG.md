@@ -4,6 +4,10 @@
 
 These fork additions are beta: they pass the automated tests and have run on live Red and Crystal games, but have had little long-run use so far.
 
+- Gold, Silver and Crystal now train before the Elite Four. The original challenged Will as soon as the last badge was won, so a run fought mostly by the starter reached the League with its other Pokémon far behind, lost once the starter fainted and went back to Will over and over until it asked for help. Before each attempt the next strongest party member now trains on Route 26 with the Exp. Share, then the strongest, to levels set by the battle style's level margin (Balanced 40 and 50). This applies to every style, Balanced included, since the original could not finish.
+
+- Quiet the cancelled-request tracebacks a game printed when it stopped with a live view open, which the watchdog reported as three unexpected errors (WouldBlock and two CancelledErrors).
+
 - Add a **Cancel trade** button to an automatic trade in progress on each adventure's Trading page. It shows only while nothing has been exchanged, and uses the coordinator's existing cancel, so both adventures keep their Pokémon. Upstream offered Cancel only for trades still waiting in line.
 
 - Priorities outside Balanced: Crystal now waits for a phone trainer's item call in the background, like the Day Care walk, instead of standing by a Pokémon Center PC, since the call reaches the player anywhere with phone service. Collecting the item once the call comes still runs as upkeep.

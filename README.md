@@ -72,7 +72,20 @@ Pokémon barely give experience. A battle style changes how cautious that is, pe
 | **Custom** | your number | your number | your number |
 
 With a limit set, training and challenging take turns in stretches of that length until the badge
-is won. Gold, Silver and Crystal only train before Falkner, so there it mostly changes that.
+is won. Gold, Silver and Crystal only train before Falkner and the Elite Four, so there it changes
+those levels.
+
+**Crystal, Gold and Silver League training (every style):** the original walks into Will as soon as
+the last badge is won, and a run fought mostly by the starter lost to him over and over with the
+rest of the team in the single digits. Now, before each attempt, the next strongest Pokémon trains
+on Route 26 with the Exp. Share (so the starter keeps gaining beside it), then the starter:
+
+| Style | Partner to | Strongest to |
+| --- | --- | --- |
+| **Balanced** | 40 | 50 |
+| **Bold** | 35 | 45 |
+| **Careful** | 45 | 55 |
+| **Custom** | 30 + your margin | 40 + your margin |
 
 **Set it:** stop the adventure, open its settings, choose **Battle style (beta)**, save.<br>
 **Tested:** automated tests of every gate, including a Sabrina case like a stalled Yellow run.
