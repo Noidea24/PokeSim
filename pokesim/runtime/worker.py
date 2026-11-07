@@ -57,6 +57,25 @@ class Bootstrap:
                    SimulationSettings.from_dict(data.get('settings')), name, frozen)
 
 
+class ShutdownCancelFilter(logging.Filter):
+    """Noidea24 fork: keep live views cut off by a stopping game out of the error log.
+
+    When a game stops, its web server gives open connections five seconds and then cancels them.
+    The game page, the TV view and its feed keep a stream open the whole time, so each stop
+    printed a cancelled traceback, which the watchdog then reported as unexpected errors.
+    """
+    def __init__(self, stopping):
+        super().__init__()
+        self.stopping = stopping
+
+    def filter(self, record):
+        import asyncio
+        if record.exc_info and record.exc_info[0] is not None and self.stopping():
+            if issubclass(record.exc_info[0], asyncio.CancelledError):
+                return False
+        return True
+
+
 class WorkerAuthorization:
     """Authenticate every route, including static assets and streaming responses."""
     def __init__(self, app, token):
@@ -208,6 +227,7 @@ def serve(bootstrap, parent_stream, ready_stream):
                 WorkerAuthorization(app, bootstrap.token), host='127.0.0.1', port=port,
                 loop='asyncio', http='h11', ws='none', log_config=None, access_log=False,
                 timeout_graceful_shutdown=5))
+            logging.getLogger('uvicorn.error').addFilter(ShutdownCancelFilter(lambda: server.should_exit))
 
             def monitor():
                 reported = False
