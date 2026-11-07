@@ -152,7 +152,9 @@ def test_library_route_merges_live_worker_streams(tmp_path, monkeypatch):
     try:
         with TestClient(create_app(manager)) as client:
             assert client.get('/api/v1/tv/stream?ids=nothere').status_code == 409
-            timer = threading.Timer(1.5, lambda: setattr(manager, 'closing', True))
+            # Each test game sends three frames in about 0.15 seconds. Slow macOS and Windows runners
+            # took over 1.5 seconds to deliver them all, so the feed now stays open longer.
+            timer = threading.Timer(6, lambda: setattr(manager, 'closing', True))
             timer.start()
             response = client.get('/api/v1/tv/stream?ids=red,gold,stopped,nothere&fps=60')
             timer.join()
