@@ -4,6 +4,8 @@
 
 These fork additions are beta: they pass the automated tests and have run on live Red and Crystal games, but have had little long-run use so far.
 
+- Gold, Silver and Crystal now pick the cheapest item that does the job. The original reached for a Full Restore first for any damage or status, so a few HP or a poisoning at nearly full health spent one, and by the League the bag was out. Damage now gets the smallest potion that heals all of it, then Max Potion, then Full Restore. A status alone gets its own cure, then Full Heal, and a Full Restore only in battle. Damage and a status together in battle still take one Full Restore, since that fixes both in one turn.
+
 - Gold, Silver and Crystal now train before the Elite Four. The original challenged Will as soon as the last badge was won, so a run fought mostly by the starter reached the League with its other Pokémon far behind, lost once the starter fainted and went back to Will over and over until it asked for help. Before each attempt the next strongest party member now trains on Route 26 with the Exp. Share, then the strongest, to levels set by the battle style's level margin (Balanced 40 and 50). This applies to every style, Balanced included, since the original could not finish.
 
 - Quiet the cancelled-request tracebacks a game printed when it stopped with a live view open, which the watchdog reported as three unexpected errors (WouldBlock and two CancelledErrors).

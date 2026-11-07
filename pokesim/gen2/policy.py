@@ -1494,11 +1494,12 @@ class Policy:
             if mon.hp == 0:
                 names = ('MAX_REVIVE', 'REVIVE')
             elif mon.hp < mon.max_hp * (0.55 if snapshot.in_battle else 0.8):
-                names = ('FULL_RESTORE', 'MAX_POTION', 'HYPER_POTION', 'SUPER_POTION', 'POTION')
+                # Noidea24 fork: the cheapest potion that heals the damage, not a Full Restore first.
+                from .remedies import healing
+                names = healing(mon.max_hp - mon.hp, status=bool(mon.status), in_battle=bool(snapshot.in_battle))
             elif mon.status:
-                names = ('FULL_RESTORE', 'FULL_HEAL', 'ANTIDOTE' if mon.status & 8 else
-                         'AWAKENING' if mon.status & 7 else 'PARLYZ_HEAL' if mon.status & 64 else
-                         'BURN_HEAL' if mon.status & 16 else 'ICE_HEAL')
+                from .remedies import curing
+                names = curing(mon.status, in_battle=bool(snapshot.in_battle))
             task = next((task for name in names if items.get(item := self.data.items[name], 0)
                          and self.allowed(task := Remedy(item, slot, items[item]), snapshot)), None)
             if task:
