@@ -547,9 +547,12 @@ class Policy:
         if partner:
             return partner
         if not snapshot.hall_of_fame_count:
-            # Noidea24 fork: raise a second battler and the starter before each League attempt.
-            from .league_prep import goal as league_training
-            training = league_training(self, snapshot, mem, Goal)
+            # Noidea24 fork, revised agent: raise a second battler and the starter before each attempt.
+            from ..agent import revised
+            training = None
+            if revised():
+                from .league_prep import goal as league_training
+                training = league_training(self, snapshot, mem, Goal)
             if training:
                 return training
             rooms = [('WILL', 'WILLS_ROOM', 'WillScript_Battle'), ('KOGA', 'KOGAS_ROOM', 'KogaScript_Battle'),
@@ -1171,6 +1174,11 @@ class Policy:
                 self.mode = 'Heal the team' if isinstance(self.menu, Remedy) else 'battle'
                 return Action(None, 0, 24) if button == 'wait' else Action(button, 8, 28)
             self.menu = None
+        from ..agent import revised
+        if revised():
+            # Noidea24 fork, revised agent: count whiteouts against the story step under way.
+            from .losses import observe as observe_losses
+            observe_losses(self, snapshot)
         if snapshot.in_battle:
             self.mode = 'battle'
             return self.battle(snapshot, mem)
@@ -1185,6 +1193,14 @@ class Policy:
             journey_goal = self.goal
         else:
             self.goal = journey_goal = self.journey(snapshot, mem)
+            if revised() and journey_goal is not None:
+                # Noidea24 fork, revised agent: after two losses to this step, train before trying again.
+                from .losses import forget as forget_losses, goal as loss_training
+                self.journey_key = journey_goal.key
+                forget_losses(self, snapshot, journey_goal.key)
+                training = loss_training(self, snapshot, mem, Goal, journey_goal.key)
+                if training is not None:
+                    self.goal = journey_goal = training
         shadow = getattr(self, 'shadow', None)
         inner = shadow.take() if shadow is not None else None
         release = self.release_goal(snapshot, mem, releasing)
@@ -1494,12 +1510,16 @@ class Policy:
             if mon.hp == 0:
                 names = ('MAX_REVIVE', 'REVIVE')
             elif mon.hp < mon.max_hp * (0.55 if snapshot.in_battle else 0.8):
-                # Noidea24 fork: the cheapest potion that heals the damage, not a Full Restore first.
+                # Noidea24 fork, revised agent: the cheapest potion that heals the damage.
+                from ..agent import revised
                 from .remedies import healing
-                names = healing(mon.max_hp - mon.hp, status=bool(mon.status), in_battle=bool(snapshot.in_battle))
+                names = (healing(mon.max_hp - mon.hp, status=bool(mon.status), in_battle=bool(snapshot.in_battle))
+                         if revised() else ('FULL_RESTORE', 'MAX_POTION', 'HYPER_POTION', 'SUPER_POTION', 'POTION'))
             elif mon.status:
-                from .remedies import curing
-                names = curing(mon.status, in_battle=bool(snapshot.in_battle))
+                from ..agent import revised
+                from .remedies import cure, curing
+                names = (curing(mon.status, in_battle=bool(snapshot.in_battle)) if revised()
+                         else ('FULL_RESTORE', 'FULL_HEAL', cure(mon.status)))
             task = next((task for name in names if items.get(item := self.data.items[name], 0)
                          and self.allowed(task := Remedy(item, slot, items[item]), snapshot)), None)
             if task:

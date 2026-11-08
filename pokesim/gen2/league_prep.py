@@ -1,4 +1,4 @@
-"""Noidea24 fork: train for the Johto League before challenging the Elite Four.
+"""Noidea24 fork, revised agent: train for the Johto League before challenging the Elite Four.
 
 The original walks into Will as soon as the eighth badge is won, whatever the team's levels. A
 journey fought mostly by the starter reaches the League with one strong Pokémon and HM carriers
@@ -9,7 +9,8 @@ outside the League gate.
 
 The battle profile sets the levels through its level margin: Balanced trains the partner to 40
 and the strongest to 50, Bold to 35 and 45, Careful to 45 and 55. With training patience (Bold),
-time spent training alternates with attempts, as before a gym.
+time spent training alternates with attempts, as before a gym. Every lost attempt after the first
+adds three levels to both (see losses.py).
 """
 from .training import identity, journey as train
 
@@ -18,9 +19,10 @@ LEAD_LEVEL = 40       # plus the profile's level margin
 PARTNER_LEVEL = 30    # plus the profile's level margin
 
 
-def targets():
+def targets(bump=0):
+    """The strongest and partner levels. ``bump`` adds the levels lost attempts asked for."""
     from ..caution import margin
-    return LEAD_LEVEL + margin(), PARTNER_LEVEL + margin()
+    return min(100, LEAD_LEVEL + margin() + bump), min(100, PARTNER_LEVEL + margin() + bump)
 
 
 def team(snapshot):
@@ -33,9 +35,9 @@ def team(snapshot):
     return (mons[0] if mons else None), (mons[1] if len(mons) > 1 else None)
 
 
-def wanted(snapshot):
+def wanted(snapshot, bump=0):
     """The Pokémon to train and the level it needs, or None when the team is ready."""
-    lead_target, partner_target = targets()
+    lead_target, partner_target = targets(bump)
     lead, partner = team(snapshot)
     if partner is not None and partner.level < partner_target:
         return partner, partner_target
@@ -51,7 +53,8 @@ def goal(policy, snapshot, mem, Goal):
     project = state.get('training')
     if policy.in_league(snapshot):
         return None
-    need = wanted(snapshot)
+    from .losses import league_bump
+    need = wanted(snapshot, league_bump(policy))
     if need is None or not keep_training('train_league', snapshot.frame):
         if project and project.get('league'):
             state['training'] = None

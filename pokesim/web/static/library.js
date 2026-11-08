@@ -746,8 +746,23 @@
   function fairDvsOffered() {
     return ['red', 'blue', 'yellow'].includes(selectedVersion())
   }
+  // Noidea24 fork (beta): the revised agent plays Gold, Silver and Crystal for now.
+  function agentOffered() {
+    return ['gold', 'silver', 'crystal'].includes(selectedVersion())
+  }
+  const AGENT_NOTES = {
+    original: 'The original agent from upstream PokeSim, unchanged.',
+    revised: 'Reworked preparation: trains before the Elite Four, uses the cheapest potion or cure that does the job, and after two losses to the same trainer trains on a nearby route before trying again.',
+  }
+  function showAgent(prefix) {
+    $(`#${prefix}-agent-note`).textContent = AGENT_NOTES[$(`#${prefix}-agent`).value]
+  }
+  $('#new-agent').onchange = () => showAgent('new')
+  $('#settings-agent').onchange = () => showAgent('settings')
   function updateStarters() {
     $('#new-fair-dvs').hidden = !fairDvsOffered()
+    $('#new-agent-field').hidden = !agentOffered()
+    showAgent('new')
     const choices = startersFor(selectedVersion())
     const previous = $('#starter').value
     $('#starter').innerHTML = '<option value="random">Surprise me</option>' + choices.map(name => `<option value="${esc(name)}">${esc(name[0].toUpperCase() + name.slice(1))}</option>`).join('')
@@ -895,6 +910,10 @@
       $('#settings-priorities').value = game.settings?.priorities || 'balanced'
       $('#settings-priorities').disabled = running(game)
       showPriorities(johto)
+      $('#settings-agent').value = game.settings?.agent || 'original'
+      $('#settings-agent').disabled = running(game) || !johto
+      $('#settings-agent-field').hidden = !johto
+      showAgent('settings')
       $('#settings-event-steps-label').textContent = johto ? 'Steps between gift, trade, Sudowoodo and Snorlax returns' : 'Steps between gift, trade and Snorlax returns'
       $('#adventure-settings').showModal()
       return
@@ -921,12 +940,14 @@
       const startNow = $('#start-created').checked
       const result = await write('/api/v1/adventures', {name: $('#new-name').value.trim(), rom_id: romId, starter,
         trainer_name: $('#new-trainer').value.trim().toUpperCase(), rival_name: $('#new-rival').value.trim().toUpperCase(),
-        ...(randomizer ? {randomizer} : {}), ...(fairDvsOffered() && $('#new-fair-wild-dvs').checked ? {fair_wild_dvs: true} : {})})
+        ...(randomizer ? {randomizer} : {}), ...(fairDvsOffered() && $('#new-fair-wild-dvs').checked ? {fair_wild_dvs: true} : {}),
+        ...(agentOffered() && $('#new-agent').value === 'revised' ? {agent: 'revised'} : {})})
       const game = result.adventure || result
       $('#create-dialog').close()
       $('#create-form').reset()
       $('#randomizer-options').hidden = true
       $('#new-fair-dvs').hidden = true
+      $('#new-agent-field').hidden = true
       $('#rom-id').value = ''
       if (startNow) await write(`/api/v1/adventures/${encodeURIComponent(game.id)}/start`)
       notice('Adventure created. Its status will update as it gets ready.')
@@ -942,7 +963,7 @@
     const profile = $('#settings-battle-profile').value
     $('#settings-profile-custom').hidden = profile !== 'custom'
     $('#settings-profile-note').textContent = PROFILE_NOTES[profile] +
-      (johto ? ' Gold, Silver and Crystal train before Falkner and the Elite Four, so here it sets those levels.' : '')
+      (johto ? ' Gold, Silver and Crystal train before Falkner, and with the Revised agent before the Elite Four too, so here it sets those levels.' : '')
   }
   // Noidea24 fork (beta): what it prefers after the story. Story, healing and supplies always come first.
   const PRIORITY_NOTES = {
@@ -971,6 +992,7 @@
       if (game && !running(game)) {
         rewards.battle_profile = $('#settings-battle-profile').value
         rewards.priorities = $('#settings-priorities').value
+        if (['gold', 'silver', 'crystal'].includes(game.version)) rewards.agent = $('#settings-agent').value
         if (rewards.battle_profile === 'custom') Object.assign(rewards, {gym_caution: Number($('#settings-gym-caution').value),
           level_margin: Number($('#settings-level-margin').value), training_patience: Number($('#settings-training-patience').value)})
       }

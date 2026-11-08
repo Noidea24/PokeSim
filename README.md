@@ -75,7 +75,7 @@ With a limit set, training and challenging take turns in stretches of that lengt
 is won. Gold, Silver and Crystal only train before Falkner and the Elite Four, so there it changes
 those levels.
 
-**Crystal, Gold and Silver League training (every style):** the original walks into Will as soon as
+**Crystal, Gold and Silver League training (Revised agent, section 6):** the original walks into Will as soon as
 the last badge is won, and a run fought mostly by the starter lost to him over and over with the
 rest of the team in the single digits. Now, before each attempt, the next strongest Pokémon trains
 on Route 26 with the Exp. Share (so the starter keeps gaining beside it), then the starter:
@@ -111,6 +111,28 @@ The call reaches the player anywhere with phone service, and collecting the item
 
 **Set it:** stop the adventure, open its settings, choose **Priorities (beta)**, save.<br>
 **Tested:** automated tests of the order and wandering for every choice.
+
+### 6. Revised agent (beta, Gold, Silver and Crystal)
+
+Each Gold, Silver or Crystal adventure picks its agent. **Original** is upstream PokeSim's agent,
+unchanged. **Revised** is this fork's rework of how it prepares and fights, built up a piece at a
+time. It has:
+
+| Change | Original | Revised |
+| --- | --- | --- |
+| **Elite Four** | Challenges Will as soon as the last badge is won | Trains a partner, then the strongest, on Route 26 first (levels in section 4) |
+| **Losing** | Heals and walks back with the same team | After two losses to the same trainer, trains on a nearby route to that trainer's level, more after each further loss |
+| **Items** | Full Restore first for any damage or status | Cheapest potion that covers the damage; a status gets its own cure, and a Full Restore only in battle |
+
+After two losses to the same story trainer, the strongest Pokémon trains to 3 levels above that
+trainer's best and the next strongest to 5 below it, adding 3 more for each further loss. The
+route depends on the badge count: Route 33, 35, 37, 39, 42, 43, 44, then Route 26. In the League,
+each lost attempt after the first adds 3 levels to League training.
+
+**Set it:** choose **Agent (beta)** when creating a Gold, Silver or Crystal adventure, or stop one
+and change it in its settings. Red, Blue and Yellow play the same with either.<br>
+**Tested:** automated tests of loss counting, training targets and the settings, plus live Crystal
+runs of League training. Training after gym losses has not had a live run yet.
 
 ### Smaller fixes and settings
 

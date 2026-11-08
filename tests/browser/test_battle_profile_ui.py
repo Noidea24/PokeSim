@@ -80,3 +80,54 @@ def test_priorities_save_and_reload(page, tmp_path, monkeypatch):
         assert captured['manager'].registry.adventure(captured['row']['id'])['settings']['priorities'] == 'trainer'
         page.locator('[data-action="settings"]').click()
         expect(choice).to_have_value('trainer')
+
+
+@pytest.mark.parametrize('width', [320, 1280])
+def test_agent_choice_on_create_and_in_settings(page, tmp_path, monkeypatch, width):
+    """Noidea24 fork (beta): Gold, Silver and Crystal offer the original or revised agent."""
+    from playwright.sync_api import expect
+    from conftest import serve
+    from pokesim.app.manager import Manager, create_app
+    from pokesim.app.registry import identifier
+    captured = {}
+
+    def factory(url):
+        manager = Manager(tmp_path / 'library', url)
+        monkeypatch.setattr(manager, 'start', lambda: None)
+        manager.registry.add_rom('crystal-rom', 'sha1-crystal', 'crystal')
+        manager.registry.add_rom('yellow-rom', 'sha1-yellow', 'yellow')
+        captured['yellow'] = manager.registry.create('Weekend Yellow', 'yellow-rom', {}, identifier())
+        captured.update(manager=manager)
+        return create_app(manager)
+    with serve(factory) as url:
+        manager = captured['manager']
+        page.set_viewport_size({'width': width, 'height': 900})
+        page.goto(url)
+        page.locator('#new-adventure').click()
+        page.locator('.game-card[data-version="yellow"]').click()
+        expect(page.locator('#new-agent-field')).to_be_hidden()
+        page.locator('.game-card[data-version="crystal"]').click()
+        expect(page.locator('#new-agent-field')).to_be_visible()
+        expect(page.locator('#new-agent-note')).to_contain_text('upstream')
+        page.locator('#new-agent').select_option('revised')
+        expect(page.locator('#new-agent-note')).to_contain_text('two losses')
+        assert page.evaluate('document.documentElement.scrollWidth <= innerWidth')
+        page.locator('#new-name').fill('Revised Crystal')
+        page.locator('#start-created').uncheck()
+        page.locator('#create-submit').click()
+        expect(page.locator('#create-dialog')).not_to_be_visible()
+        rows = {row['name']: row for row in manager.registry.adventures()}
+        assert rows['Revised Crystal']['settings']['agent'] == 'revised'
+        assert 'agent' not in rows['Weekend Yellow']['settings']
+
+        card = page.locator('.adventure-card', has_text='Revised Crystal')
+        card.locator('[data-action="settings"]').click()
+        expect(page.locator('#settings-agent')).to_have_value('revised')
+        page.locator('#settings-agent').select_option('original')
+        page.get_by_role('button', name='Save adventure settings', exact=True).click()
+        expect(page.locator('#adventure-settings')).not_to_be_visible()
+        crystal = next(row for row in manager.registry.adventures() if row['name'] == 'Revised Crystal')
+        assert 'agent' not in crystal['settings']
+
+        page.locator('.adventure-card', has_text='Weekend Yellow').locator('[data-action="settings"]').click()
+        expect(page.locator('#settings-agent-field')).to_be_hidden()

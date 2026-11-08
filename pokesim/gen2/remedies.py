@@ -1,4 +1,4 @@
-"""Noidea24 fork: pick the cheapest item that does the job, and keep Full Restores for when it counts.
+"""Noidea24 fork, revised agent: pick the cheapest item that does the job, and keep Full Restores for when it counts.
 
 The original reached for a Full Restore first whenever a Pokémon was hurt or had a status, so a
 Potion's worth of damage or a poisoning at nearly full health spent one. By the League the bag was

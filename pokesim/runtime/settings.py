@@ -50,6 +50,7 @@ class SimulationSettings:
     level_margin: int = 10
     training_patience: int = 0
     priorities: str = 'balanced'
+    agent: str = 'original'
     seed: int | None = None
     fast_text: bool = True
     battle_animations: bool = True
@@ -107,6 +108,9 @@ class SimulationSettings:
         from ..priorities import CHOICES as PRIORITY_CHOICES
         if self.priorities not in PRIORITY_CHOICES:
             raise ValueError('Unknown priorities')
+        from ..agent import CHOICES as AGENT_CHOICES
+        if self.agent not in AGENT_CHOICES:
+            raise ValueError('Unknown agent')
         ranges = {
             **PROFILE_LIMITS,
             'speed': (0, 16), 'autosave_seconds': (1, 86400),
