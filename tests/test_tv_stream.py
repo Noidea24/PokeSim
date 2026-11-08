@@ -152,9 +152,9 @@ def test_library_route_merges_live_worker_streams(tmp_path, monkeypatch):
     try:
         with TestClient(create_app(manager)) as client:
             assert client.get('/api/v1/tv/stream?ids=nothere').status_code == 409
-            # Each test game sends three frames in about 0.15 seconds. Slow macOS and Windows runners
-            # took over 1.5 seconds to deliver them all, so the feed now stays open longer.
-            timer = threading.Timer(6, lambda: setattr(manager, 'closing', True))
+            # Each test game sends three frames, ends its stream and is followed again a second
+            # later, so the feed replays them. Slow runners need a few seconds for the first round.
+            timer = threading.Timer(4, lambda: setattr(manager, 'closing', True))
             timer.start()
             response = client.get('/api/v1/tv/stream?ids=red,gold,stopped,nothere&fps=60')
             timer.join()
@@ -166,8 +166,12 @@ def test_library_route_merges_live_worker_streams(tmp_path, monkeypatch):
     finally:
         for server, _ in servers.values():
             server.should_exit = True
-    last = {aid: data for aid, data in frames}
-    assert last == {'red': b'\x89PNG-red-2', 'gold': b'\x89PNG-gold-2'}
+    # Every frame reaches the viewer under its own game, and stopped or unknown games send none.
+    # Which frame comes last depends on where in a replay the feed closed, so it is not checked.
+    seen = {}
+    for aid, data in frames:
+        seen.setdefault(aid, set()).add(data)
+    assert seen == {name: {b'\x89PNG-' + f'{name}-{i}'.encode() for i in range(3)} for name in ('red', 'gold')}
 
 
 def test_a_quiet_live_stream_ends_without_an_error(tmp_path, monkeypatch, caplog):
