@@ -194,8 +194,8 @@ def test_a_time_of_day_encounter_names_the_species_and_the_time(data):
 def walk_anywhere(monkeypatch):
     from pokesim.gen2 import training
     from pokesim.gen2.policy import Goal
-    monkeypatch.setattr(training, 'walk_goal', lambda policy, snapshot, Goal_, label: Goal(
-        'collection_train', label(), 'SILVER_CAVE_ROOM_1', 9, 31))
+    monkeypatch.setattr(training, 'walk_goal', lambda policy, snapshot, Goal_, label, map_name='SILVER_CAVE_ROOM_1': Goal(
+        'collection_train', label(), map_name, 9, 31))
 
 
 def test_without_exp_share_a_levelling_plan_trains_the_partner_in_the_lead(data, monkeypatch):
