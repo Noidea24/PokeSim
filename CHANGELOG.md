@@ -4,6 +4,8 @@
 
 These fork additions are beta: they pass the automated tests and have run on live Red and Crystal games, but have had little long-run use so far.
 
+- Revised agent: restock Hyper Potions before Max Potions and Full Restores, and between League battles top up only Pokémon under 60% HP instead of 80%. The original bought Full Restores at 3,000 each first and spent a Hyper Potion on a Pokémon at 30 of 50 HP, which together with the half of the money every whiteout costs left League runs broke.
+
 - Add an **Agent (beta)** choice for Gold, Silver and Crystal, on the create form and in adventure settings: Original (upstream, unchanged, and the default) or Revised. League training and the cheapest-item choice below now belong to Revised, so Original plays exactly as upstream. Revised also learns from losses: each whiteout in a trainer battle counts against the story step under way, and after a second loss it trains on a route opened for the current badge count, the strongest to 3 levels above the best Pokémon that trainer used and the next strongest to 5 below, with 3 more levels per further loss. In the League, each lost attempt after the first adds 3 levels to League training. Original is stored as absent.
 
 - Revised agent: Gold, Silver and Crystal pick the cheapest item that does the job. The original reached for a Full Restore first for any damage or status, so a few HP or a poisoning at nearly full health spent one, and by the League the bag was out. Damage now gets the smallest potion that heals all of it, then Max Potion, then Full Restore. A status alone gets its own cure, then Full Heal, and a Full Restore only in battle. Damage and a status together in battle still take one Full Restore, since that fixes both in one turn.

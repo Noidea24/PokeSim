@@ -41,3 +41,19 @@ def test_every_order_lists_each_item_once():
             for battle in (False, True):
                 order = healing(missing, status=status, in_battle=battle)
                 assert len(order) == len(set(order)) == 5
+
+
+def test_revised_tops_up_under_60_percent_between_league_battles(monkeypatch):
+    from pokesim import config
+    from pokesim.gen2.remedies import heal_below
+    monkeypatch.setattr(config, 'AGENT', 'original')
+    assert heal_below() == 0.8
+    monkeypatch.setattr(config, 'AGENT', 'revised')
+    assert heal_below() == 0.6
+    assert not 30 < 50 * heal_below()      # the reported 30 of 50 HP keeps its potion
+
+
+def test_revised_restocks_cheapest_first():
+    from pokesim.gen2.ledger import POTIONS, REVISED_POTIONS
+    assert set(POTIONS) == set(REVISED_POTIONS)
+    assert REVISED_POTIONS[0] == 'HYPER_POTION' and POTIONS[0] == 'FULL_RESTORE'

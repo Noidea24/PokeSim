@@ -339,6 +339,9 @@ BALL_FLOOR = 4
 BALL_REFILL, BALL_STOCK_REFILL = 20, 40
 BALL_STOCK = 20
 POTIONS = ('FULL_RESTORE', 'MAX_POTION', 'HYPER_POTION')
+# Noidea24 fork, revised agent: the same stock bought cheapest first. A Hyper Potion heals 200 HP,
+# more than most Pokémon have before the League, at 1,200 against a Full Restore's 3,000.
+REVISED_POTIONS = ('HYPER_POTION', 'MAX_POTION', 'FULL_RESTORE')
 POTION_LOW, POTION_FULL = 8, 12
 REVIVE_LOW, REVIVE_FULL = 3, 5
 # An ordinary catch keeps the last few balls while money cannot buy the floor back. Species met only
@@ -447,7 +450,8 @@ def supplies(policy, snapshot):
         inventory = dict(snapshot.items)
         count = sum(inventory.get(data.items[name], 0) for name in POTIONS)
         if count < POTION_LOW:
-            rows.append(('potions', POTIONS, POTION_FULL - count))
+            from ..agent import revised
+            rows.append(('potions', REVISED_POTIONS if revised() else POTIONS, POTION_FULL - count))
         revives = inventory.get(data.items['REVIVE'], 0)
         if revives < REVIVE_LOW:
             rows.append(('revives', ('REVIVE',), REVIVE_FULL - revives))

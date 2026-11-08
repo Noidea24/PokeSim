@@ -123,6 +123,8 @@ time. It has:
 | **Elite Four** | Challenges Will as soon as the last badge is won | Trains a partner, then the strongest, on Route 26 first (levels in section 4) |
 | **Losing** | Heals and walks back with the same team | After two losses to the same trainer, trains on a nearby route to that trainer's level, more after each further loss |
 | **Items** | Full Restore first for any damage or status | Cheapest potion that covers the damage; a status gets its own cure, and a Full Restore only in battle |
+| **Shopping** | Restocks Full Restores (3,000) first, then Max and Hyper Potions | Restocks Hyper Potions (1,200) first |
+| **League top-ups** | Heals anyone under 80% HP between rooms | Heals under 60% |
 
 After two losses to the same story trainer, the strongest Pokémon trains to 3 levels above that
 trainer's best and the next strongest to 5 below it, adding 3 more for each further loss. The

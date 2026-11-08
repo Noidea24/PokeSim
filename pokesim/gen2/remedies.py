@@ -10,7 +10,19 @@ out of them and later poisonings got Potions too late. Now:
   alone can cost the fight. Outside battle a Pokémon Center cures it, and in Gold, Silver and Crystal
   poison stops at 1 HP outside battle.
 - Damage and a status together in battle: a Full Restore first, since it fixes both in one turn.
+- Between League battles the original tops up anyone under 80% HP, so a Pokémon at 30 of 50 HP got a
+  1,200 Hyper Potion for 20 HP. The revised agent tops up under 60%.
 """
+
+OUT_OF_BATTLE = 0.8           # the original's top-up line outside battle, where only the League heals
+REVISED_OUT_OF_BATTLE = 0.6
+
+
+def heal_below():
+    """The share of max HP under which a Pokémon is healed outside battle."""
+    from ..agent import revised
+    return REVISED_OUT_OF_BATTLE if revised() else OUT_OF_BATTLE
+
 
 HEALS = (('POTION', 20), ('SUPER_POTION', 50), ('HYPER_POTION', 200))
 

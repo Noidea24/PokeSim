@@ -1501,6 +1501,7 @@ class Policy:
 
     def remedy(self, snapshot, *, active=None):
         items = dict(snapshot.items)
+        from .remedies import heal_below
         for slot, mon in enumerate(snapshot.party):
             if mon.egg or active is not None and slot != active:
                 continue
@@ -1514,7 +1515,7 @@ class Policy:
                 return True
             if mon.hp == 0:
                 names = ('MAX_REVIVE', 'REVIVE')
-            elif mon.hp < mon.max_hp * (0.55 if snapshot.in_battle else 0.8):
+            elif mon.hp < mon.max_hp * (0.55 if snapshot.in_battle else heal_below()):
                 # Noidea24 fork, revised agent: the cheapest potion that heals the damage.
                 from ..agent import revised
                 from .remedies import healing
