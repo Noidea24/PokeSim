@@ -120,16 +120,27 @@ time. It has:
 
 | Change | Original | Revised |
 | --- | --- | --- |
-| **Elite Four** | Challenges Will as soon as the last badge is won | Trains a partner, then the strongest, on Route 26 first (levels in section 4) |
+| **Team** | One strong Pokémon, the rest left where they were caught | Before each gym from Bugsy on and before the League, picks a team of three from the party and raises it |
+| **Elite Four** | Challenges Will as soon as the last badge is won | Raises the team on Route 26 first (levels in section 4) |
 | **Losing** | Heals and walks back with the same team | After two losses to the same trainer, trains on a nearby route to that trainer's level, more after each further loss |
 | **Items** | Full Restore first for any damage or status | Cheapest potion that covers the damage; a status gets its own cure, and a Full Restore only in battle |
 | **Shopping** | Restocks Full Restores (3,000) first, then Max and Hyper Potions | Restocks Hyper Potions (1,200) first |
 | **League top-ups** | Heals anyone under 80% HP between rooms | Heals under 60% |
 
-After two losses to the same story trainer, the strongest Pokémon trains to 3 levels above that
-trainer's best and the next strongest to 5 below it, adding 3 more for each further loss. The
-route depends on the badge count: Route 33, 35, 37, 39, 42, 43, 44, then Route 26. In the League,
-each lost attempt after the first adds 3 levels to League training.
+**How the team is picked:** the strongest Pokémon, plus the two that best cover the leader's team.
+Each candidate is scored against each of the leader's Pokémon on its best damaging move (type
+effectiveness, same-type bonus, power and accuracy, base attack against base defense) and on how hard
+the leader's types hit it back. It only picks from the party it already has and never goes looking
+for particular Pokémon, so every run's team comes from its own starter and catches. Pokémon raised for
+an earlier leader count a quarter more, so the team carries through the run, and near ties are broken
+at random per run. The partners train first, holding the Exp. Share, then the strongest: for a gym the
+strongest to the leader's best level plus half the battle style's margin (Whitney: 25 on Balanced) and
+the partners to five below that level (15). The leaders' teams are written into the fork and checked
+against pokecrystal and pokegold. A run with randomized trainers trains to what its losses saw instead.
+
+After two losses to any other story trainer, the strongest Pokémon trains to 3 levels above that
+trainer's best and the next strongest to 5 below it, adding 3 more for each further loss. Gyms
+lost to twice get 3 more levels on the team for each further loss, and so does the League.
 
 **Set it:** choose **Agent (beta)** when creating a Gold, Silver or Crystal adventure, or stop one
 and change it in its settings. Red, Blue and Yellow play the same with either.<br>

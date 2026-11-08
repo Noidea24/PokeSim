@@ -82,7 +82,11 @@ def targets(entry):
 def goal(policy, snapshot, mem, Goal, journey_key):
     """A training goal after two losses to the step under way, or None to try again now."""
     from ..caution import keep_training
-    from .league_prep import team
+    from .team_prep import strength
+
+    def team(snapshot):
+        mons = sorted((mon for mon in snapshot.party if not mon.egg), key=strength, reverse=True)
+        return (mons[0] if mons else None), (mons[1] if len(mons) > 1 else None)
     state = policy.collection
     project = state.get('training')
     entry = records(policy).get(journey_key)

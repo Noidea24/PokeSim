@@ -1199,11 +1199,16 @@ class Policy:
         else:
             self.goal = journey_goal = self.journey(snapshot, mem)
             if revised() and journey_goal is not None:
-                # Noidea24 fork, revised agent: after two losses to this step, train before trying again.
+                # Noidea24 fork, revised agent: raise a team before each gym leader, and after two
+                # losses to any other story trainer, train before trying again.
                 from .losses import forget as forget_losses, goal as loss_training
+                from .team_prep import GYMS, goal as team_training
                 self.journey_key = journey_goal.key
                 forget_losses(self, snapshot, journey_goal.key)
-                training = loss_training(self, snapshot, mem, Goal, journey_goal.key)
+                if journey_goal.key in GYMS:
+                    training = team_training(self, snapshot, mem, Goal, journey_goal.key)
+                else:
+                    training = loss_training(self, snapshot, mem, Goal, journey_goal.key)
                 if training is not None:
                     self.goal = journey_goal = training
         shadow = getattr(self, 'shadow', None)

@@ -752,7 +752,7 @@
   }
   const AGENT_NOTES = {
     original: 'The original agent from upstream PokeSim, unchanged.',
-    revised: 'Reworked preparation: trains before the Elite Four, uses the cheapest potion or cure that does the job, and after two losses to the same trainer trains on a nearby route before trying again.',
+    revised: 'Reworked preparation: before each gym and the League it picks a team of three that covers the leader and raises it, uses the cheapest potion or cure that does the job, and after two losses to the same trainer trains harder before trying again.',
   }
   function showAgent(prefix) {
     $(`#${prefix}-agent-note`).textContent = AGENT_NOTES[$(`#${prefix}-agent`).value]
