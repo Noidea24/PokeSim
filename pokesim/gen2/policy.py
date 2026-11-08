@@ -145,7 +145,12 @@ class Policy:
         from .npc_trades import Trade
         self.starter = state.get('starter', self.starter)
         self.completed = state.get('completed', {})
+        # Noidea24 fork, revised agent: losses are lessons, so a reload to an older save keeps them.
+        lessons = (getattr(self, 'collection', None) or {}).get('losses')
         self.collection = state.get('collection', {'target': None})
+        if lessons:
+            from .losses import carry
+            carry(self, lessons)
         from .standdown import migrate
         migrate(self)
         self.demand = {int(key): value for key, value in state.get('demand', {}).items()}

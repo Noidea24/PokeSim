@@ -8,7 +8,8 @@ next strongest to five below that, with three more levels for every further loss
 on a route the story has already opened for the current badge count. In the League, every loss after
 the first raises League preparation's levels by three instead.
 
-Records are kept in the adventure, so a restart keeps them. A step's record is dropped once the story
+Records are kept in the adventure, so a restart keeps them, and a reload to an older save keeps the
+newer count, since what was learned happened all the same. A step's record is dropped once the story
 moves to another step, and the League's once the Hall of Fame is reached.
 """
 from .training import identity, journey as train
@@ -43,6 +44,18 @@ def observe(policy, snapshot):
             entry['level'] = max(entry['level'], battle['level'])
     elif not snapshot.in_battle:
         policy.loss_battle = None
+
+
+def carry(policy, lessons):
+    """Keep the larger count and level of each record across a reload to an older save."""
+    from ..agent import revised
+    if not revised():
+        return
+    state = records(policy)
+    for key, entry in lessons.items():
+        mine = state.setdefault(key, {'count': 0, 'level': 0})
+        mine['count'] = max(mine['count'], entry.get('count', 0))
+        mine['level'] = max(mine['level'], entry.get('level', 0))
 
 
 def forget(policy, snapshot, journey_key):

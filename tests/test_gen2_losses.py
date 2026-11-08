@@ -127,3 +127,35 @@ def test_agent_setting():
 def test_original_is_the_default(monkeypatch):
     monkeypatch.setattr(config, 'AGENT', 'nonsense')
     assert agent.name() == 'original' and not agent.revised()
+
+
+def test_the_reported_league_pattern_raises_training_after_each_lost_attempt():
+    """Win, win, win, loss, then win x3 loss, win x4 loss, win x2 loss: four lost attempts."""
+    policy = Policy(league=True)
+    bumps = []
+    for wins in (3, 3, 4, 2):
+        for _ in range(wins):
+            losses.observe(policy, snap(mon(48), mon(30), battle=2, enemy=44))
+            losses.observe(policy, snap(mon(48), mon(30)))
+        lose(policy, enemy=47)
+        bumps.append(losses.league_bump(policy))
+    assert bumps == [0, 3, 6, 9]
+    assert league_prep.targets(bumps[-1]) == (59, 49)
+
+
+def test_a_reload_to_an_older_save_keeps_what_was_learned():
+    policy = Policy(league=True)
+    lose(policy, enemy=47)
+    lose(policy, enemy=47)
+    older = {'league': {'count': 1, 'level': 40}}
+    lessons = losses.records(policy)
+    policy.collection = {'losses': dict(older)}
+    losses.carry(policy, lessons)
+    assert losses.records(policy)['league'] == {'count': 2, 'level': 47}
+
+
+def test_the_original_agent_keeps_nothing_across_reloads(monkeypatch):
+    monkeypatch.setattr(config, 'AGENT', 'original')
+    policy = Policy()
+    losses.carry(policy, {'plain': {'count': 2, 'level': 20}})
+    assert losses.records(policy) == {}
