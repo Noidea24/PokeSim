@@ -461,6 +461,14 @@ class Emulator:
         frame = self.current_frame(timeout)
         return getattr(self, 'still_image', b'') or frame
 
+    def _time_split(self):
+        """Noidea24 fork: where this game's time goes, logged every five minutes (time_split.py)."""
+        split = getattr(self, '_split', None)
+        if split is None:
+            from ..time_split import TimeSplit
+            split = self._split = TimeSplit()
+        return split
+
     def _publish_frame(self):
         with self.frame_cond:
             self.frame_image = self._shot_png()
@@ -957,7 +965,10 @@ class Emulator:
             now = time.monotonic()
             observing = (self.frame + chunk) // 30 != self.frame // 30
             publishing = now < self._watch_until and now - self._last_publish >= 1 / config.STREAM_FPS
+            split = self._time_split()
+            started = time.perf_counter()
             self.pb.tick(chunk, render=observing or publishing, sound=audible)
+            split.add('emulating', time.perf_counter() - started)
             if audible:
                 self.audio.publish(self.pb.sound.raw_buffer[:self.pb.sound.raw_buffer_head])
             self.frame += chunk
@@ -967,7 +978,9 @@ class Emulator:
             if observing:
                 self._observe()
             if publishing:
+                started = time.perf_counter()
                 self._publish_frame()
+                split.drew(time.perf_counter() - started)
                 self._last_publish = now
             speed = 1 if self.manual_mode else self.speed
             if speed:
@@ -975,6 +988,7 @@ class Emulator:
                 delay = self._target - time.monotonic()
                 if 0 < delay < 1:
                     time.sleep(delay)
+                    split.add('sleeping', delay)
                 elif abs(delay) >= 1:
                     self._target = time.monotonic()
             self.last_activity = time.monotonic()
@@ -1098,8 +1112,10 @@ class Emulator:
                         time.sleep(0.03)
                         continue
                     else:
+                        started = time.perf_counter()
                         snapshot = self._read()
                         action = self.policy.step(snapshot, self.pb.memory, stack_pointer(self.pb))
+                        self._time_split().decided(time.perf_counter() - started)
                         self._report_missed_shiny(snapshot)
                         self._report_marathon(snapshot)
                     if action.button:
@@ -1113,6 +1129,7 @@ class Emulator:
                     if self.frame >= self._guard_frame:
                         self._guard_frame = self.frame + 60
                         self._check_guards()
+                        self._time_split().report()
                     if time.monotonic() >= next_save and not getattr(self.policy, 'backing_out', False):
                         self._autosave()
                         next_save = time.monotonic() + config.AUTOSAVE_SECONDS

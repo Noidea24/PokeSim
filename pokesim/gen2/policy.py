@@ -1361,6 +1361,12 @@ class Policy:
                 if self.goal.face and mem.byte('wPlayerDirection') & 12 != {'down': 0, 'up': 4, 'left': 8, 'right': 12}[self.goal.face]:
                     return Action(self.goal.face, 8, 16)
                 button = arrive(self, snapshot)
+                if button == 'wait' and self.goal.key == 'collection_phone_wait':
+                    # Noidea24 fork, revised agent: nothing changes until the phone rings, and a call
+                    # waits on screen, so decide every 4 game seconds instead of 20 times a second.
+                    from ..agent import revised
+                    if revised():
+                        return Action(None, 0, 240)
                 if button:
                     return Action(None, 0, 24) if button == 'wait' else Action(button, 8, 36)
             if self.goal.key == 'snorlax' and mem.byte('wMapMusic') != 0x40:

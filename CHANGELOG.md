@@ -4,6 +4,10 @@
 
 These fork additions are beta: they pass the automated tests and have run on live Red and Crystal games, but have had little long-run use so far.
 
+- Log where each Gold, Silver or Crystal game's time goes, every five minutes: deciding (with the number of decisions and the time each took), emulating, drawing frames for live viewers, sleeping to hold the speed, and other. A game short of its speed or using a whole core now says why in `docker logs`, as a `time split over 300s` line.
+
+- Revised agent: while waiting by the phone for a trainer's call, decide every 4 game seconds instead of every 24 frames. Nothing changes until the phone rings and a call waits on screen, so the original re-ran its whole decision about 20 times a second at 8x for nothing.
+
 - Revised agent: raise a team, not a pair. Before each gym from Bugsy on, and before the League, it picks three from the party: the strongest Pokémon and the two that best cover the leader's team by type, move and base stats, and trains the two first with the Exp. Share, then the strongest. It only chooses from what the run has caught, prefers Pokémon raised for earlier leaders, and breaks near ties at random per run, so runs do not converge on one team. Gym levels follow the leader's best Pokémon and the battle style; the League keeps 40 and 50 on Balanced. The leaders' teams are written into the fork, since the Gen II game data has no trainer parties, and a test checks them against the generated data.
 
 - Revised agent: restock Hyper Potions before Max Potions and Full Restores, and between League battles top up only Pokémon under 60% HP instead of 80%. The original bought Full Restores at 3,000 each first and spent a Hyper Potion on a Pokémon at 30 of 50 HP, which together with the half of the money every whiteout costs left League runs broke.
